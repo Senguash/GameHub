@@ -13,7 +13,6 @@ public class CtrlLogic : MonoBehaviour
     void Start()
     {
         Debug.Log("Game start");
-        HelperClass hc = new HelperClass();
         root = GetComponent<UIDocument>().rootVisualElement;
 
         VisualElement ve = new VisualElement();
@@ -28,18 +27,35 @@ public class CtrlLogic : MonoBehaviour
         ludoButton.clicked += () => { EnterLudo(); };
         selectGamePanel.Add(ludoButton);
 
-        Button unoButton = new Button();
-        unoButton.text = "Play Uno";
-        selectGamePanel.Add(unoButton);
+        Button sudokuButton = new Button();
+        sudokuButton.text = "Play Sudoku";
+        sudokuButton.clicked += () => { EnterSudoku(); };
+        selectGamePanel.Add(sudokuButton);
 
-
+        Button ticTacToeButton = new Button();
+        ticTacToeButton.text = "Play Tic Tac Toe";
+        ticTacToeButton.clicked += () => { EnterTicTacToe(); };
+        selectGamePanel.Add(ticTacToeButton);
     }
 
     void EnterLudo()
     {
         root.Clear();
+        LudoController ludo = gameObject.AddComponent(typeof(LudoController)) as LudoController;
+        root.Add(ludo.root);
     }
-
+    void EnterSudoku()
+    {
+        root.Clear();
+        SudokuController sudoku = gameObject.AddComponent(typeof(SudokuController)) as SudokuController;
+        root.Add(sudoku.root);
+    }
+    void EnterTicTacToe()
+    {
+        root.Clear();
+        TicTacToeController tic = gameObject.AddComponent(typeof(TicTacToeController)) as TicTacToeController;
+        root.Add(tic.root);
+    }
     // Update is called once per frame
     void Update()
     {
@@ -53,13 +69,23 @@ public class CtrlLogic : MonoBehaviour
 }
 
 
-public class HelperClass
+public abstract class Game : MonoBehaviour
 {
 
+    public VisualElement root;
 
-    public HelperClass()
+    public Game()
     {
-        Debug.Log("Im helping");
+        
     }
 
+    private void Awake()
+    {
+        root = new VisualElement();
+    }
+
+    public VisualElement GetRootElement()
+    {
+        return root;
+    }
 }
