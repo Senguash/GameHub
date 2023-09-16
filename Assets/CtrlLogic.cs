@@ -16,6 +16,8 @@ public class CtrlLogic : MonoBehaviour
     {
         Debug.Log("Game start");
         root = GetComponent<UIDocument>().rootVisualElement;
+        StyleSheet uss = Resources.Load<StyleSheet>("StyleSheet");
+        root.styleSheets.Add(uss);
         gameContainer = new VisualElement();
         gameContainer.style.height = Length.Percent(95);
         topBar = GenerateTopBar();
@@ -34,9 +36,9 @@ public class CtrlLogic : MonoBehaviour
         gameContainer.Clear();
         gameContainer.style.display = DisplayStyle.Flex;
         VisualElement selectGamePanel = new VisualElement();
+        selectGamePanel.style.backgroundColor = Color.green;
         selectGamePanel.style.justifyContent = Justify.Center;
         selectGamePanel.style.alignItems = Align.Center;
-        //selectGamePanel.style.backgroundColor = Color.green;
         selectGamePanel.style.height = Length.Percent(100);
 
         Button ludoButton = new Button();
@@ -74,7 +76,6 @@ public class CtrlLogic : MonoBehaviour
     {
         //gameContainer.style.display = DisplayStyle.None;
         VisualElement ve = new VisualElement();
-        //ve.style.backgroundColor = Color.gray;
         ve.style.justifyContent = Justify.Center;
         ve.style.alignItems = Align.Center;
         ve.style.height = Length.Percent(100);
@@ -153,6 +154,7 @@ public abstract class Game : MonoBehaviour
     private void Awake()
     {
         root = new VisualElement();
+        root.style.height = Length.Percent(100);
     }
 
     public VisualElement GetRootElement()

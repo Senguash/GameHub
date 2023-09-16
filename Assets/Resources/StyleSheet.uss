@@ -1,0 +1,17 @@
+
+
+
+.sudoku-row {
+	display: flex;
+}
+
+.sudoku-button {
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-left: 0px;
+}
+
+.sudoku-field {
+	border-width: 1px;
+	border-color: #000000;
+}
