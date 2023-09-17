@@ -36,7 +36,6 @@ public class CtrlLogic : MonoBehaviour
         gameContainer.Clear();
         gameContainer.style.display = DisplayStyle.Flex;
         VisualElement selectGamePanel = new VisualElement();
-        selectGamePanel.style.backgroundColor = Color.green;
         selectGamePanel.style.justifyContent = Justify.Center;
         selectGamePanel.style.alignItems = Align.Center;
         selectGamePanel.style.height = Length.Percent(100);
