@@ -328,12 +328,54 @@ public class Sudoku
                 break;
             }  
         }
-        
-        if (x < 9 && y < 9)
+        sudoku.nums[x, y].SetTrueValue(0);
+        /*if (x < 9 && y < 9)
         {
             Debug.Log("i:" + x + " j:" + y);
-            sudoku.nums[x, y].SetTrueValue(0);
+            
+        }*/
+        return false;
+    }
+
+    public static bool SolveSudoku(Sudoku sudoku, ref int counter)
+    {
+        int x = 0;
+        int y = 0;
+        for (int i = 0; i < 81; i++)
+        {
+            x = i / 9;
+            y = i % 9;
+            if (sudoku.nums[x, y].GetValue() == 0)
+            {
+                List<int> numbers = GetNumberList();
+                foreach (int val in numbers)
+                {
+                    if (sudoku.TestValue(new Tuple<int, int>(x, y), val))
+                    {
+                        sudoku.nums[x, y].SetTrueValue(val);
+                        if (CheckComplete(sudoku))
+                        {
+                            counter++;
+                            break;
+                        }
+                        else
+                        {
+                            if (SolveSudoku(sudoku, ref counter))
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                break;
+            }
         }
+        sudoku.nums[x, y].SetTrueValue(0);
+        /*if (x < 9 && y < 9)
+        {
+            Debug.Log("i:" + x + " j:" + y);
+            
+        }*/
         return false;
     }
 
@@ -450,10 +492,21 @@ public class SudokuNumber : IEquatable<SudokuNumber>
 
     public override string ToString()
     {
-        if (realValue == 0)
+        if (selectedValue == 0)
         {
             return "";
         } else
+        {
+            return selectedValue.ToString();
+        }
+    }
+    public string GetRealValueAsString()
+    {
+        if (realValue == 0)
+        {
+            return "";
+        }
+        else
         {
             return realValue.ToString();
         }
@@ -463,9 +516,14 @@ public class SudokuNumber : IEquatable<SudokuNumber>
     {
         return realValue;
     }
-    public void SelectValue(int value)
+    public void SetValue(int value)
     {
         selectedValue = value;
+    }
+
+    public int GetValue()
+    {
+        return selectedValue;
     }
 
     public void SetTrueValue(int value)
