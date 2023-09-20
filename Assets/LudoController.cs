@@ -58,6 +58,8 @@ public class _ludo_game
 {
     private List<_ludo_player> _ludo_players = new List<_ludo_player>();
 
+    public Dictionary<int, _ludo_player_piece> _pieces = new Dictionary<int, _ludo_player_piece>();
+
     public int _add_player(_ludo_player _new_ludo_player) //Returns player ID
     {
         if (_ludo_players.Count < 4)//Check if player count exceeds max count of 4
@@ -98,7 +100,13 @@ public class _ludo_player_piece
 {
     private int _absolute_position;
     private int _offset;
-    private bool _home;
+    //private bool _home;
+
+    public _ludo_player_piece(int _absolute_position, int _offset)
+    {
+        this._absolute_position = _absolute_position;
+        this._offset = _offset;
+    }
 
 }
 
