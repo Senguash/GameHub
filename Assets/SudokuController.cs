@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Security.Cryptography;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.VisualScripting;
 using UnityEditor.Experimental;
 using UnityEditorInternal;
 using UnityEngine;
@@ -13,7 +15,7 @@ using UnityEngine.UIElements;
 public class SudokuController : Game
 {
     Label errorsLabel;
-    int errorsRemaining = 3;
+    int errorsRemaining = 5;
     VisualElement gameBoard;
     Dictionary<Tuple<int, int>, Button> buttonDictionary;
     Dictionary<Tuple<int, int>, VisualElement> veDictionary;
@@ -26,8 +28,7 @@ public class SudokuController : Game
     void Start()
     {
         sudoku = new Sudoku();
-        //sudoku.GenerateRandom();
-        Sudoku.FillSudoku(sudoku);
+        sudoku.GenerateRandom();
         Debug.Log(sudoku.ToString());
         InitSudokuUI();
     }
@@ -35,7 +36,7 @@ public class SudokuController : Game
     // Update is called once per frame
     void Update()
     {
-        if (Input.touchCount > 0)
+        /*if (Input.touchCount > 0)
         {
             Touch touch = Input.GetTouch(0);
             Vector2 touchPosition = Camera.main.ScreenToWorldPoint(touch.position);
@@ -49,7 +50,7 @@ public class SudokuController : Game
                     }
                 }
             }
-        }
+        }*/
     }
 
     public void InitSudokuUI()
@@ -57,10 +58,14 @@ public class SudokuController : Game
         gameBoard = new VisualElement();
         gameBoard.style.flexDirection = FlexDirection.Column;
         VisualElement buffer = new VisualElement();
+        buffer.style.alignItems = Align.Center;
+        errorsLabel = new Label();
+        buffer.Add(errorsLabel);
+        errorsLabel.text = "Allowed Errors Remaining " + errorsRemaining.ToString();
         VisualElement ve = new VisualElement();
-        ve.style.backgroundColor = Color.gray;
+        //ve.style.backgroundColor = Color.gray;
         ve.style.width = Length.Percent(100);
-        ve.style.height = Length.Percent(100);
+        ve.style.height = Length.Percent(90);
         //ve.style.justifyContent = Justify.Center;
         ve.style.alignItems = Align.Center;
 
@@ -101,18 +106,41 @@ public class SudokuController : Game
                 label.style.visibility = Visibility.Visible;
                 v.Add(label);
                 v.style.visibility = Visibility.Visible;
-                v.AddToClassList("sudoku-field");
+                //v.AddToClassList("sudoku-field");
 
                 btn.Add(v);
                 v.Add(label);
                 int tmp_i = i;
                 int tmp_j = j;
-                btn.clicked += () => { DeselectSpace(selectedSpace); selectedSpace = new Tuple<int, int>(tmp_i, tmp_j); SelectSpace(selectedSpace); };
+                btn.clicked += () => { 
+                    DeselectSpace(selectedSpace); 
+                    selectedSpace = new Tuple<int, int>(tmp_i, tmp_j); 
+                    SelectSpace(selectedSpace); 
+                    UpdateUI();
+                };
                 btn.style.width = 24;
                 btn.style.height = 24;
                 btn.ClearClassList();
                 btn.AddToClassList("sudoku-button");
                 v.style.visibility = Visibility.Visible;
+                if (i == 2 || i==5)
+                {
+                    v.style.borderBottomWidth = 2;
+                } else
+                {
+                    v.style.borderBottomWidth = 1;
+                }
+                if (j == 2 || j == 5)
+                {
+                    v.style.borderRightWidth = 2;
+                }
+                else
+                {
+                    v.style.borderRightWidth = 1;
+                }
+                
+                v.style.borderRightColor = Color.black;
+                v.style.borderBottomColor = Color.black;
                 row.Add(btn);
 
                 buttonDictionary.Add(new Tuple<int, int>(i, j), btn);
@@ -128,14 +156,28 @@ public class SudokuController : Game
 
         VisualElement numberSelectionRow = new VisualElement();
         numberSelectionRow.style.flexDirection = FlexDirection.Row;
+        numberSelectionRow.style.justifyContent = Justify.Center;
         numberSelectionRow.style.alignItems = Align.Center;
+        numberSelectionRow.style.width = Length.Percent(100);
+        numberSelectionRow.style.height = Length.Percent(10);
         for (int i = 1; i < 10; i++)
         {
             VisualElement v = new VisualElement();
             Button btn = new Button();
             btn.visible = true;
             int tmp = i;
-            btn.clicked += () => { UISetValue(selectedSpace, tmp); };
+            btn.clicked += () => { 
+                if (sudoku.SelectValue(selectedSpace, tmp))
+                {
+                    UISetValue(selectedSpace, tmp);
+                } else
+                {
+                    errorsRemaining--;
+                    Debug.Log("Wrong number");
+                    errorsLabel.text = "Allowed Errors Remaining " + errorsRemaining.ToString();
+                }
+                UpdateUI();
+            };
             btn.text = i.ToString();
             btn.style.width = 24;
             btn.style.height = 24;
@@ -156,13 +198,13 @@ public class SudokuController : Game
         {
             for (int j = 0; j < 9; j++)
             {
-                if (sudoku.nums[i, j].locked == true || true)
+                if (sudoku.nums[i, j].locked == true)
                 {
                     Label l;
                     if (labelDictionary.TryGetValue(new Tuple<int, int>(i, j), out l))
                     {
                         l.style.color = new Color(0.3f, 0.3f, 0.3f); ;
-                        l.text = sudoku.nums[i, j].GetRealValue().ToString();
+                        l.text = sudoku.nums[i, j].GetValue().ToString();
                     }
                     VisualElement ve;
                     if (veDictionary.TryGetValue(new Tuple<int, int>(i, j), out ve))
@@ -190,12 +232,26 @@ public class SudokuController : Game
         {
             for (int j = 0; j < 9; j++)
             {
-                if (sudoku.nums[i, j].locked == false)
+                if (sudoku.nums[i, j].locked)
                 {
                     VisualElement ve;
                     if (veDictionary.TryGetValue(new Tuple<int, int>(i, j), out ve))
                     {
-                        ve.style.backgroundColor = Color.white;
+                        ve.style.backgroundColor = new Color(0.85f, 0.85f, 1f);
+                    }
+                } 
+                else
+                {
+                    VisualElement ve;
+                    if (veDictionary.TryGetValue(new Tuple<int, int>(i, j), out ve))
+                    {
+                        if (sudoku.CheckComplete())
+                        {
+                            ve.style.backgroundColor = new Color(0.85f, 1f, 0.85f);
+                        } else
+                        {
+                            ve.style.backgroundColor = Color.white;
+                        }
                     }
                 }
                 
@@ -223,18 +279,32 @@ public class SudokuController : Game
         foreach (Tuple<int, int> p in pointsInSquare)
         {
             VisualElement ve;
-            if (veDictionary.TryGetValue(p, out ve) && !CheckLocked(p))
+            if (veDictionary.TryGetValue(p, out ve))
             {
-                ve.style.backgroundColor = new Color(0.85f, 0.85f, 0.85f);
+                if (!CheckLocked(p))
+                {
+                    ve.style.backgroundColor = new Color(0.85f, 0.85f, 0.85f);
+                } else
+                {
+                    ve.style.backgroundColor = new Color(0.75f, 0.75f, 0.9f);
+                }
+                
             }
         }
         for (int i = 0; i < 9; i++)
         {
             VisualElement ve;
             Tuple<int, int> p = new Tuple<int, int>(coords.Item1, i);
-            if (veDictionary.TryGetValue(p, out ve) && !CheckLocked(p))
+            if (veDictionary.TryGetValue(p, out ve))
             {
-                ve.style.backgroundColor = new Color(0.85f, 0.85f, 0.85f);
+                if (!CheckLocked(p))
+                {
+                    ve.style.backgroundColor = new Color(0.85f, 0.85f, 0.85f);
+                }
+                else
+                {
+                    ve.style.backgroundColor = new Color(0.75f, 0.75f, 0.9f);
+                }
             }
         }
 
@@ -242,9 +312,16 @@ public class SudokuController : Game
         {
             VisualElement ve;
             Tuple<int, int> p = new Tuple<int, int>(i, coords.Item2);
-            if (veDictionary.TryGetValue(p, out ve) && !CheckLocked(p))
+            if (veDictionary.TryGetValue(p, out ve))
             {
-                ve.style.backgroundColor = new Color(0.85f, 0.85f, 0.85f);
+                if (!CheckLocked(p))
+                {
+                    ve.style.backgroundColor = new Color(0.85f, 0.85f, 0.85f);
+                }
+                else
+                {
+                    ve.style.backgroundColor = new Color(0.75f, 0.75f, 0.9f);
+                }
             }
         }
     }
@@ -255,6 +332,8 @@ public class SudokuController : Game
 public class Sudoku
 {
     public SudokuNumber[,] nums;
+
+    private int[,] trueValues;
     public Sudoku() {
         nums = new SudokuNumber[9,9];
         for (int i = 0; i < 9; i++)
@@ -266,78 +345,86 @@ public class Sudoku
         }
     }
 
-    public void GenerateRandom()
+    public bool SelectValue(Tuple<int, int> coords, int value)
     {
-        System.Random rand = new System.Random();
-        //Placeholder
+        if (trueValues[coords.Item1, coords.Item2] == value)
+        {
+            this.nums[coords.Item1, coords.Item2].SetValue(value);
+            return true;
+        } else
+        {
+            return false;
+        }
+    }
+
+    Sudoku Copy()
+    {
+        Sudoku sudoku = new Sudoku();
         for (int i = 0; i < 9; i++)
         {
             for (int j = 0; j < 9; j++)
             {
-                int newValue;
-                int timeout = 0;
-                do
-                {
-                    timeout++;
-                    newValue = rand.Next(1, 10);
-                } while (!TestValue(new Tuple<int, int>(i, j), newValue) && timeout < 100000);
-                if (timeout > 90000)
-                {
-                    Debug.Log("Timeout");
-                }
-                nums[i, j].SetTrueValue(newValue);
-                if (rand.Next(0, 4) == 0)
-                {
-                    nums[i, j].Lock();
-                }
-                nums[i, j].Lock();
-                //Debug.Log(this.ToString());
+                sudoku.nums[i, j].SetValue(this.nums[i, j].GetValue());
             }
         }
-
+        return sudoku;
     }
+
+    public void GenerateRandom()
+    {
+        Sudoku.FillSudoku(this);
+        trueValues = GetIntArray();
+        Debug.Log(this.ToString());
+        this.Reduce(5);
+    }
+
+    public void Reduce(int attempts)
+    {
+        int[,] attemptBackup = this.Backup(); //Remove compiler error
+        System.Random rand = new System.Random();
+        while (attempts > 0) {
+
+            attemptBackup = this.Backup();
+
+            int x = rand.Next(0, 9);
+            int y = rand.Next(0, 9);
+            while (this.nums[x, y].GetValue() == 0)
+            {
+                x = rand.Next(0, 9);
+                y = rand.Next(0, 9);
+            }
+            this.nums[x, y].SetValue(0);
+
+            int counter = 0;
+            int[,] checkBackup = this.Backup();
+            GetSolutionCount(this, ref counter);
+            if (counter != 1)
+            {
+                this.RestoreFromBackup(attemptBackup);
+                attempts--;
+            }
+            else
+            {
+                this.RestoreFromBackup(checkBackup);
+            }
+        }
+        this.RestoreFromBackup(attemptBackup);
+
+
+        for (int i = 0; i < 9; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                if (this.nums[i, j].GetValue() != 0)
+                {
+                    this.nums[i, j].Lock();
+                }
+            }
+        }
+    }
+
     //With help from: https://www.101computing.net/sudoku-generator-algorithm/
     public static bool FillSudoku(Sudoku sudoku)
-    {
-        int x = 0;
-        int y = 0;
-        for (int i = 0; i < 81; i++)
-        {
-            x = i / 9;
-            y = i % 9;
-            if (sudoku.nums[x, y].GetRealValue() == 0)
-            {
-                List<int> numbers = GetNumberList();
-                foreach (int val in numbers)
-                {
-                    if (sudoku.TestValue(new Tuple<int, int>(x, y), val))
-                    {
-                        sudoku.nums[x, y].SetTrueValue(val);
-                        if (CheckComplete(sudoku))
-                        {
-                            return true;
-                        } else
-                        {
-                            if (FillSudoku(sudoku))
-                            {
-                                return true;
-                            }
-                        }
-                    }
-                }
-                break;
-            }  
-        }
-        sudoku.nums[x, y].SetTrueValue(0);
-        /*if (x < 9 && y < 9)
-        {
-            Debug.Log("i:" + x + " j:" + y);
-            
-        }*/
-        return false;
-    }
-
-    public static bool SolveSudoku(Sudoku sudoku, ref int counter)
     {
         int x = 0;
         int y = 0;
@@ -352,15 +439,50 @@ public class Sudoku
                 {
                     if (sudoku.TestValue(new Tuple<int, int>(x, y), val))
                     {
-                        sudoku.nums[x, y].SetTrueValue(val);
-                        if (CheckComplete(sudoku))
+                        sudoku.nums[x, y].SetValue(val);
+                        if (sudoku.CheckComplete())
+                        {
+                            return true;
+                        } else
+                        {
+                            if (FillSudoku(sudoku))
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                break;
+            }  
+        }
+        sudoku.nums[x, y].SetValue(0);
+        return false;
+    }
+
+    public static bool GetSolutionCount(Sudoku sudoku, ref int counter)
+    {
+        int x = 0;
+        int y = 0;
+        for (int i = 0; i < 81; i++)
+        {
+            x = i / 9;
+            y = i % 9;
+            if (sudoku.nums[x, y].GetValue() == 0)
+            {
+                List<int> numbers = GetNumberList();
+                foreach (int val in numbers)
+                {
+                    if (sudoku.TestValue(new Tuple<int, int>(x, y), val))
+                    {
+                        sudoku.nums[x, y].SetValue(val);
+                        if (sudoku.CheckComplete())
                         {
                             counter++;
                             break;
                         }
                         else
                         {
-                            if (SolveSudoku(sudoku, ref counter))
+                            if (GetSolutionCount(sudoku, ref counter))
                             {
                                 return true;
                             }
@@ -370,22 +492,17 @@ public class Sudoku
                 break;
             }
         }
-        sudoku.nums[x, y].SetTrueValue(0);
-        /*if (x < 9 && y < 9)
-        {
-            Debug.Log("i:" + x + " j:" + y);
-            
-        }*/
+        sudoku.nums[x, y].SetValue(0);
         return false;
     }
 
-    private static bool CheckComplete(Sudoku sudoku)
+    public bool CheckComplete()
     {
         for (int i = 0; i < 9; i++)
         {
             for (int j = 0; j < 9; j++)
             {
-                if (sudoku.nums[i, j].GetRealValue() == 0)
+                if (this.nums[i, j].GetValue() == 0)
                 {
                     return false;
                 }
@@ -394,11 +511,41 @@ public class Sudoku
         return true;
     }
 
+    public int[,] Backup()
+    {
+        return GetIntArray();
+    }
+
+    public void RestoreFromBackup(int[,] backup) 
+    {
+        for (int i = 0; i < 9; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                this.nums[i, j].SetValue(backup[i, j]);
+            }
+        }
+    }
+
+    private int[,] GetIntArray()
+    {
+        int[,] a = new int[9, 9];
+        for (int i = 0; i < 9; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                a[i, j] = this.nums[i, j].GetValue();
+
+            }
+        }
+        return a;
+    }
+
     private bool TestValue(Tuple<int, int>coords, int value)
     {
         for (int i = 0; i < 9; i++)
         {
-            if (nums[coords.Item1, i].GetRealValue() == value)
+            if (nums[coords.Item1, i].GetValue() == value)
             {
                 return false;
             }
@@ -406,7 +553,7 @@ public class Sudoku
 
         for (int i = 0; i < 9; i++)
         {
-            if (nums[i, coords.Item2].GetRealValue() == value)
+            if (nums[i, coords.Item2].GetValue() == value)
             {
                 return false;
             }
@@ -415,7 +562,7 @@ public class Sudoku
         List<Tuple<int, int>> pointsInSquare = SudokuHelper.GetPointsInSameSquare(coords);
         foreach (Tuple<int, int> p in pointsInSquare)
         {
-            if (nums[p.Item1, p.Item2].GetRealValue() == value)
+            if (nums[p.Item1, p.Item2].GetValue() == value)
             {
                 return false;
             }
@@ -442,11 +589,11 @@ public class Sudoku
 
     private static List<int> GetNumberList()
     {
-        System.Random rand = new System.Random();
         List<int> numbers = new List<int>() { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-        var shuffled = numbers.OrderBy(i => rand.Next()).ToList();
-        return shuffled;
+        numbers.Shuffle();
+        return numbers;
     }
+
 }
 
 
@@ -454,9 +601,7 @@ public class SudokuNumber : IEquatable<SudokuNumber>
 {
     public readonly Tuple<int, int> coordinates;
 
-    private int selectedValue;
-
-    private int realValue;
+    private int value;
     
     public bool locked { get; private set; }
     
@@ -467,21 +612,10 @@ public class SudokuNumber : IEquatable<SudokuNumber>
 
     public bool Equals (SudokuNumber other)
     {
-        if (realValue == 0)
+        if (value == 0)
         {
             return false;
-        } else if (realValue == other.realValue) 
-        {
-            return true;
-        } else
-        {
-            return false;
-        }
-    }
-
-    public bool IsCorrect()
-    {
-        if (selectedValue == realValue)
+        } else if (value == other.value) 
         {
             return true;
         } else
@@ -492,53 +626,56 @@ public class SudokuNumber : IEquatable<SudokuNumber>
 
     public override string ToString()
     {
-        if (selectedValue == 0)
+        if (value == 0)
         {
             return "";
         } else
         {
-            return selectedValue.ToString();
+            return value.ToString();
         }
-    }
-    public string GetRealValueAsString()
-    {
-        if (realValue == 0)
-        {
-            return "";
-        }
-        else
-        {
-            return realValue.ToString();
-        }
-    }
-
-    public int GetRealValue()
-    {
-        return realValue;
     }
     public void SetValue(int value)
     {
-        selectedValue = value;
+        this.value = value;
     }
 
     public int GetValue()
     {
-        return selectedValue;
-    }
-
-    public void SetTrueValue(int value)
-    {
-        realValue = value;
+        return value;
     }
 
     public void Lock()
     {
         locked = true;
     }
+    public bool IsSet()
+    {
+        if (value == 0)
+        {
+            return false;
+        } else
+        {
+            return true;
+        }
+    }
 }
 
 public static class SudokuHelper
 {
+    //from: https://stackoverflow.com/questions/273313/randomize-a-listt
+    public static void Shuffle<T>(this IList<T> list)
+    {
+        System.Random rand = new System.Random();
+        int n = list.Count;
+        while (n > 1)
+        {
+            n--;
+            int k = rand.Next(n + 1);
+            T value = list[k];
+            list[k] = list[n];
+            list[n] = value;
+        }
+    }
     public static List<Tuple<int, int>> GetPointsInSameSquare(Tuple<int, int> coords)
     {
         List<Tuple<int, int>> points = new List<Tuple<int, int>>();
