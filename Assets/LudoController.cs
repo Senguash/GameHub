@@ -24,13 +24,15 @@ public class LudoController : Game
 
 public class _ludo_player
 {
-    private string name;
-    private int color;
+    private string _name;
+    private int _color;
+    private bool ai_player;
 
-    public _ludo_player(string name, int color)
+    public _ludo_player(string _name, int _color, bool ai_player)
     {
-        this.name = name;
-        this.color = color;
+        this._name = _name;
+        this._color = _color;
+        this.ai_player = ai_player;
     }
 }
 
@@ -59,5 +61,10 @@ public class _ludo_game
     {
         return _ludo_players;
     }
+
+}
+
+public class _ludo_board
+{
 
 }
