@@ -116,7 +116,16 @@ public class _ludo_player_piece
     public int _set_absolute_position(int _absolute_position)
     {
         this._absolute_position = _absolute_position;
-        return _absolute_position;
+        return this._absolute_position;
+    }
+    public int _get_offset()
+    {
+        return _offset;
+    }
+    public int _set_offset()
+    {
+        this._offset = _offset;
+        return this._offset;
     }
 }
 
