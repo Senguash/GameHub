@@ -36,6 +36,12 @@ public class _ludo_player
     }
     private string name;
     private int color;
+
+    public _ludo_player(string name, int color)
+    {
+        this.name = name;
+        this.color = color;
+    }
 }
 
 public class _ludo_game
@@ -57,7 +63,7 @@ public class _ludo_game
     {
         return _ludo_players[_player_id];
     }
-    public _ludo_player _remove_player(int _player_id)
+    public _ludo_player _remove_player(int _player_id)//Returns removed player object
     {
         _ludo_player _ludo_player_to_remove = _ludo_players[_player_id];
         _ludo_players.RemoveAt(_player_id);
