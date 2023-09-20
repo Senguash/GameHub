@@ -5,6 +5,7 @@ using UnityEngine.UIElements;
 
 public class LudoController : Game
 {
+    public Dictionary<int, ludo_piece> ludo_pieces = new Dictionary<int, ludo_piece>();
     // Start is called before the first frame update
     void Start()
     {
@@ -30,36 +31,11 @@ public class LudoController : Game
     }
 }
 
-public class ludo_player
-{
-    private string name;
-    private int color;
-    private bool ai_player;
-    private List<ludo_piece> ludo_players = new List<ludo_piece>();
 
-    public ludo_player(string name, int color, bool ai_player)
-    {
-        this.name = name;
-        this.color = color;
-        this.ai_player = ai_player;
-    }
-    private string name;
-    private int color;
-
-    public _ludo_player(string _name, int _color, bool ai_player)
-    {
-        this._name = _name;
-        this._color = _color;
-        this.ai_player = ai_player;
-    }
-
-}
 
 public class ludo_game
 {
     private List<ludo_player> ludo_players = new List<ludo_player>();
-
-    public Dictionary<int, ludo_piece> _pieces = new Dictionary<int, ludo_piece>();
 
     public int add_player(ludo_player new_ludo_player) //Returns player ID
     {
@@ -74,9 +50,9 @@ public class ludo_game
             return -1;//Return -1 if player counter is 4
         }
     }
-    public ludo_player get_player(int _player_id)//Returns player object
+    public ludo_player get_player(int player_id)//Returns player object
     {
-        return ludo_players[_player_id];
+        return ludo_players[player_id];
     }
     public _ludo_player _get_player(int _player_id)
     {
@@ -96,6 +72,29 @@ public class ludo_game
 
 }
 
+public class ludo_player
+{
+    private string name;
+    private int color;
+    private bool ai_player;
+    private List<ludo_piece> ludo_player_pieces = new List<ludo_piece>();
+
+    public ludo_player(string name, int color, bool ai_player)
+    {
+        this.name = name;
+        this.color = color;
+        this.ai_player = ai_player;
+        ludo_piece _ludo_piece;
+        for (int i = 0; i < 4; i++)
+        {
+            _ludo_piece = new ludo_piece(-1, i);
+            ludo_player_pieces.Add(_ludo_piece);
+            ludoController.ludo_pieces.Add(_ludo_piece);
+
+        }
+    }
+
+}
 public class ludo_piece
 {
     private int absolute_position;
