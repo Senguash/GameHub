@@ -53,6 +53,11 @@ public class _ludo_game
         return _ludo_players[_player_id];
     }
     public _ludo_player _remove_player(int _player_id)//Returns removed player object
+    public _ludo_player _get_player(int _player_id)
+    {
+        return _ludo_players[_player_id];
+    }
+    public _ludo_player _remove_player(int _player_id)
     {
         _ludo_player _ludo_player_to_remove = _ludo_players[_player_id];
         _ludo_players.RemoveAt(_player_id);
@@ -72,5 +77,4 @@ public class _ludo_board
 
         return 0;
     }
-    public _ludo_player _get_player()
 }
