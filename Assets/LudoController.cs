@@ -8,14 +8,14 @@ public class LudoController : Game
     // Start is called before the first frame update
     void Start()
     {
-        _ludo_game _game = new _ludo_game();
-        _ludo_player _player = new _ludo_player("test", 1, false);
+        ludo_game game = new ludo_game();
+        ludo_player player = new ludo_player("test", 1, false);
         root.Add(new Label("Test"));
-        Button _add_player_btn = new Button();
-        _add_player_btn.text = "Add player";
-        _add_player_btn.clicked += () => { _add_player(_game, _player); };
+        Button add_player_btn = new Button();
+        add_player_btn.text = "Add player";
+        add_player_btn.clicked += () => { add_player(game, player); };
         
-        root.Add(_add_player_btn);
+        root.Add(add_player_btn);
     }
 
     // Update is called once per frame
@@ -23,23 +23,24 @@ public class LudoController : Game
     {
 
     }
-    void _add_player(_ludo_game _game, _ludo_player _player)
+    void add_player(ludo_game game, ludo_player player)
     {
-        Debug.Log( _game._add_player(_player));
+        Debug.Log(game.add_player(player));
         Debug.Log("Player added");
     }
 }
 
-public class _ludo_player
+public class ludo_player
 {
-    private string _name;
-    private int _color;
+    private string name;
+    private int color;
     private bool ai_player;
+    private List<ludo_piece> ludo_players = new List<ludo_piece>();
 
-    public _ludo_player(string _name, int _color, bool ai_player)
+    public ludo_player(string name, int color, bool ai_player)
     {
-        this._name = _name;
-        this._color = _color;
+        this.name = name;
+        this.color = color;
         this.ai_player = ai_player;
     }
     private string name;
@@ -54,18 +55,18 @@ public class _ludo_player
 
 }
 
-public class _ludo_game
+public class ludo_game
 {
-    private List<_ludo_player> _ludo_players = new List<_ludo_player>();
+    private List<ludo_player> ludo_players = new List<ludo_player>();
 
-    public Dictionary<int, _ludo_player_piece> _pieces = new Dictionary<int, _ludo_player_piece>();
+    public Dictionary<int, ludo_piece> _pieces = new Dictionary<int, ludo_piece>();
 
-    public int _add_player(_ludo_player _new_ludo_player) //Returns player ID
+    public int add_player(ludo_player new_ludo_player) //Returns player ID
     {
-        if (_ludo_players.Count < 4)//Check if player count exceeds max count of 4
+        if (ludo_players.Count < 4)//Check if player count exceeds max count of 4
         {
-            _ludo_players.Add(_new_ludo_player);
-            int id = _ludo_players.Count - 1;
+            ludo_players.Add(new_ludo_player);
+            int id = ludo_players.Count - 1;
             return id;//Return the player id
         }
         else
@@ -73,64 +74,63 @@ public class _ludo_game
             return -1;//Return -1 if player counter is 4
         }
     }
-    public _ludo_player _get_player(int _player_id)//Returns player object
+    public ludo_player get_player(int _player_id)//Returns player object
     {
-        return _ludo_players[_player_id];
+        return ludo_players[_player_id];
     }
-    public _ludo_player _remove_player(int _player_id)//Returns removed player object
     public _ludo_player _get_player(int _player_id)
     {
         return _ludo_players[_player_id];
     }
-    public _ludo_player _remove_player(int _player_id)//Returns removed player object
+    public ludo_player remove_player(int player_id)//Returns removed player object
     {
-        _ludo_player _ludo_player_to_remove = _ludo_players[_player_id];
-        _ludo_players.RemoveAt(_player_id);
-        return _ludo_player_to_remove;
+        ludo_player ludo_player_to_remove = ludo_players[player_id];
+        ludo_players.RemoveAt(player_id);
+        return ludo_player_to_remove;
     }
 
-    public List<_ludo_player> _get_player_list(int _player_id)//Returns a list of type object _ludo_player
+    public List<ludo_player> get_player_list(int player_id)//Returns a list of type object _ludo_player
     {
-        return _ludo_players;
+        return ludo_players;
     }
 
 }
 
-public class _ludo_player_piece
+public class ludo_piece
 {
-    private int _absolute_position;
-    private int _offset;
-    //private bool _home;
+    private int absolute_position;
+    private int offset;
+    //private bool home;
 
-    public _ludo_player_piece(int _absolute_position, int _offset)
+    public ludo_piece(int absolute_position, int offset)
     {
-        this._absolute_position = _absolute_position;
-        this._offset = _offset;
-    }
-
-    public int _get_absolute_position()
-    {
-        return _absolute_position;
+        this.absolute_position = absolute_position;
+        this.offset = offset;
     }
 
-    public int _set_absolute_position(int _absolute_position)
+    public int get_absolute_position()
     {
-        this._absolute_position = _absolute_position;
-        return this._absolute_position;
+        return absolute_position;
     }
-    public int _get_offset()
+
+    public int set_absolute_position(int absolute_position)
     {
-        return _offset;
+        this.absolute_position = absolute_position;
+        return this.absolute_position;
     }
-    public int _set_offset()
+    public int get_offset()
     {
-        this._offset = _offset;
-        return this._offset;
+        return offset;
+    }
+    public int set_offset()
+    {
+        this.offset = offset;
+        return this.offset;
     }
 }
 
 
-public class _ludo_board
+public class ludo_board
 {
 
 
