@@ -34,6 +34,8 @@ public class _ludo_player
         this._color = _color;
         this.ai_player = ai_player;
     }
+    private string name;
+    private int color;
 }
 
 public class _ludo_game
@@ -67,4 +69,8 @@ public class _ludo_game
 public class _ludo_board
 {
 
+
+        return 0;
+    }
+    public _ludo_player _get_player()
 }
