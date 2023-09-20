@@ -35,8 +35,17 @@ public class _ludo_game
     public int _add_player(_ludo_player _new_ludo_player) //Returns player ID
     {
         _ludo_players.Add(_new_ludo_player);
-
-        return 0;
+        int id = _ludo_players.Count - 1;
+        return id;
     }
-    public _ludo_player _get_player()
+    public _ludo_player _get_player(int _player_id)
+    {
+        return _ludo_players[_player_id];
+    }
+    public _ludo_player _remove_player(int _player_id)
+    {
+        _ludo_player _ludo_player_to_remove = _ludo_players[_player_id];
+        _ludo_players.RemoveAt(_player_id);
+        return _ludo_player_to_remove;
+    }
 }
