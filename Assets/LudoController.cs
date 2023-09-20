@@ -8,10 +8,13 @@ public class LudoController : Game
     // Start is called before the first frame update
     void Start()
     {
-
+        _ludo_game _game = new _ludo_game();
+        _ludo_player _player = new _ludo_player("test", 1, false);
         root.Add(new Label("Test"));
         Button _add_player_btn = new Button();
         _add_player_btn.text = "Add player";
+        _add_player_btn.clicked += () => { _add_player(_game, _player); };
+        
         root.Add(_add_player_btn);
     }
 
@@ -19,6 +22,11 @@ public class LudoController : Game
     void Update()
     {
 
+    }
+    void _add_player(_ludo_game _game, _ludo_player _player)
+    {
+        Debug.Log( _game._add_player(_player));
+        Debug.Log("Player added");
     }
 }
 
@@ -43,6 +51,7 @@ public class _ludo_player
         this._color = _color;
         this.ai_player = ai_player;
     }
+
 }
 
 public class _ludo_game
@@ -51,9 +60,16 @@ public class _ludo_game
 
     public int _add_player(_ludo_player _new_ludo_player) //Returns player ID
     {
-        _ludo_players.Add(_new_ludo_player);
-        int id = _ludo_players.Count - 1;
-        return id;
+        if (_ludo_players.Count < 4)//Check if player count exceeds max count of 4
+        {
+            _ludo_players.Add(_new_ludo_player);
+            int id = _ludo_players.Count - 1;
+            return id;//Return the player id
+        }
+        else
+        {
+            return -1;//Return -1 if player counter is 4
+        }
     }
     public _ludo_player _get_player(int _player_id)//Returns player object
     {
@@ -77,6 +93,15 @@ public class _ludo_game
     }
 
 }
+
+public class _ludo_player_piece
+{
+    private int _absolute_position;
+    private int _offset;
+    private bool _home;
+
+}
+
 
 public class _ludo_board
 {
