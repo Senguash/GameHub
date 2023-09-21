@@ -9,25 +9,35 @@ using UnityEngine.UIElements;
 public class SudokuController : Game
 {
     Label errorsLabel;
-    int errorsRemaining = 5;
+    int errorsRemaining;
+    int maxErrorsAllowed = 5;
+    float redness;
+    bool errorStateActive = false;
     VisualElement gameBoard;
     Dictionary<Tuple<int, int>, Button> buttonDictionary;
     Dictionary<Tuple<int, int>, VisualElement> veDictionary;
     Dictionary<Tuple<int, int>, Label> labelDictionary;
     Tuple<int, int> selectedSpace;
 
-    Color col_selected;
-    Color col_row_col_box;
-    Color col_locked;
-    Color col_base;
-    Color col_success;
-    Color col_error;
+    static Color col_selected_background = new Color(0.6f, 0.6f, 0.6f);
+    static Color col_row_col_selected_background = new Color(0.7f, 0.7f, 0.7f);
+    static Color col_square_selected_background = new Color(0.8f, 0.8f, 0.8f);
+    static Color col_locked_background =  new Color(0.85f, 0.85f, 1f);
+    static Color col_locked_selected_background = new Color(0.6f, 0.6f, 0.8f);
+    static Color col_locked_selected_by_proxy_background = new Color(0.7f, 0.7f, 0.85f);
+    static Color col_base_background = new Color(1f, 1f, 1f);
+    static Color col_base_text = new Color(0f, 0f, 0f);
+    static Color col_success_background = new Color(0.3f, 0.3f, 0.3f);
+    static Color col_locked_text = new Color(0.25f, 0.25f, 0.4f);
+    static Color col_game_over_label = new Color(0.15f, 0f, 0f);
 
-    State newOrContinue = new State();
-    State difficultySelect = new State();
-    State coreGame = new State();
-    Command start = new Command();
-    Command cont = new Command();
+    State newOrContinue = new State("newOrContinue");
+    State difficultySelect = new State("difficultySelect");
+    State coreGame = new State("coreGame");
+    State gameOver = new State("gameOver");
+    Command start = new Command("start");
+    Command cont = new Command("cont");
+    Command end = new Command("end");
 
     Sudoku sudoku;
     // Start is called before the first frame update
@@ -38,20 +48,26 @@ public class SudokuController : Game
             { new StateTransition(newOrContinue, start), difficultySelect },
             { new StateTransition(difficultySelect, start), coreGame},
             { new StateTransition(newOrContinue, cont), coreGame },
+            { new StateTransition(coreGame, end), gameOver },
+            { new StateTransition(gameOver, start), difficultySelect },
         };
 
+
         SetInitialState(newOrContinue);
-        sudoku = new Sudoku();
-        sudoku.GenerateRandom(45);
-        Debug.Log(sudoku.ToString());
-
-
-        InitSudokuUI();
+        InitNewGameMenu();
+        newOrContinue.EnterEvent += InitNewGameMenu;
+        difficultySelect.EnterEvent += InitDifficultyMenu;
+        coreGame.EnterEvent += InitSudokuUI;
+        gameOver.EnterEvent += InitGameOverMenu;
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
+        if (errorStateActive)
+        {
+            UpdateErrorUI();
+        }
         /*if (Input.touchCount > 0)
         {
             Touch touch = Input.GetTouch(0);
@@ -69,11 +85,82 @@ public class SudokuController : Game
         }*/
     }
 
+    private void UpdateErrorUI()
+    {
+        if (redness > 0f)
+        {
+            VisualElement ve;
+            if (veDictionary.TryGetValue(selectedSpace, out ve))
+            {
+                ve.style.backgroundColor = new Color(Math.Max(redness, 0.6f), 0.6f, 0.6f);
+            }
+            errorsLabel.style.color = new Color(redness, 0f, 0f);
+            redness -= 0.02f;
+            if (redness <= 0f)
+            {
+                errorStateActive = false;
+                redness = 0f;
+            }
+        } else
+        {
+            VisualElement ve;
+            if (veDictionary.TryGetValue(selectedSpace, out ve))
+            {
+                ve.style.backgroundColor = col_selected_background;
+            }
+            errorsLabel.style.color = col_base_text;
+            errorStateActive = false;
+        }
+    }
+
+    private void SetUIToError()
+    {
+        errorStateActive = true;
+        redness = 1f;
+    }
+    private void InitGameOverMenu()
+    {
+        root.Clear();
+        var ve = new VisualElement();
+        ve.style.justifyContent = Justify.Center;
+        ve.style.height = Length.Percent(100);
+        root.Add(ve);
+
+        var topVE = new VisualElement();
+        topVE.style.justifyContent = Justify.Center;
+        topVE.style.alignItems = Align.Center;
+        topVE.style.height = Length.Percent(30);
+        ve.Add(topVE);
+
+        var gameOverLabel = new Label("Game Over");
+        gameOverLabel.style.fontSize = 24;
+        gameOverLabel.style.color = col_game_over_label;
+        topVE.Add(gameOverLabel);
+
+        var tryAgainButton = new Button();
+        tryAgainButton.text = "Try Again";
+        tryAgainButton.clicked += () =>
+        {
+            MoveNext(start);
+        };
+        ve.Add(tryAgainButton);
+
+        var exitButton = new Button();
+        exitButton.text = "Exit";
+        exitButton.clicked += () =>
+        {
+            ExitGame();
+        };
+        ve.Add(exitButton);
+    }
     private void InitNewGameMenu()
     {
         bool ifGameExists = false; //To be implemented
         root.Clear();
         var ve = new VisualElement();
+        ve.style.justifyContent = Justify.Center;
+        //ve.style.alignItems = Align.Center;
+        ve.style.height = Length.Percent(100);
         root.Add(ve);
         var continueButton = new Button();
         continueButton.text = "Continue";
@@ -93,7 +180,64 @@ public class SudokuController : Game
         };
         ve.Add(newButton);
     }
-    
+
+    private void InitDifficultyMenu()
+    {
+        root.Clear();
+        var ve = new VisualElement();
+        ve.style.justifyContent = Justify.Center;
+        //ve.style.alignItems = Align.Center;
+        ve.style.height = Length.Percent(100);
+        root.Add(ve);
+        var diff1Button = new Button();
+        diff1Button.text = "Easy";
+        diff1Button.clicked += () =>
+        {
+            StartNewGame(35);
+        };
+        ve.Add(diff1Button);
+
+        var diff2Button = new Button();
+        diff2Button.text = "Medium";
+        diff2Button.clicked += () =>
+        {
+            StartNewGame(40);
+        };
+        ve.Add(diff2Button);
+
+        var diff3Button = new Button();
+        diff3Button.text = "Hard";
+        diff3Button.clicked += () =>
+        {
+            StartNewGame(45);
+        };
+        ve.Add(diff3Button);
+
+        var diff4Button = new Button();
+        diff4Button.text = "Very Hard";
+        diff4Button.clicked += () =>
+        {
+            StartNewGame(50);
+        };
+        ve.Add(diff4Button);
+
+        var diff5Button = new Button();
+        diff5Button.text = "Extreme";
+        diff5Button.clicked += () =>
+        {
+            StartNewGame(60);
+        };
+        ve.Add(diff5Button);
+    }
+
+    private void StartNewGame(int diff)
+    {
+        errorsRemaining = maxErrorsAllowed;
+        sudoku = new Sudoku();
+        sudoku.GenerateRandom(diff);
+        MoveNext(start);
+    }
+
 
     private void InitSudokuUI()
     {
@@ -118,7 +262,7 @@ public class SudokuController : Game
         ve.Add(gameBoard);
         gameBoard.style.width = 216;
         gameBoard.style.height = 216;
-        gameBoard.style.backgroundColor = Color.white;
+        gameBoard.style.backgroundColor = col_base_background;
 
         buttonDictionary = new Dictionary<Tuple<int, int>, Button>();
         veDictionary = new Dictionary<Tuple<int, int>, VisualElement>();
@@ -156,11 +300,11 @@ public class SudokuController : Game
                 v.Add(label);
                 int tmp_i = i;
                 int tmp_j = j;
-                btn.clicked += () => { 
+                btn.clicked += () => {
+                    UpdateUI();
                     DeselectSpace(selectedSpace); 
                     selectedSpace = new Tuple<int, int>(tmp_i, tmp_j); 
                     SelectSpace(selectedSpace); 
-                    UpdateUI();
                 };
                 btn.style.width = 24;
                 btn.style.height = 24;
@@ -208,16 +352,25 @@ public class SudokuController : Game
             btn.visible = true;
             int tmp = i;
             btn.clicked += () => { 
-                if (sudoku.SelectValue(selectedSpace, tmp))
+                if (!sudoku.nums[selectedSpace.Item1, selectedSpace.Item2].locked)
                 {
-                    UISetValue(selectedSpace, tmp);
-                } else
-                {
-                    errorsRemaining--;
-                    Debug.Log("Wrong number");
-                    errorsLabel.text = "Allowed Errors Remaining " + errorsRemaining.ToString();
+                    if (sudoku.SelectValue(selectedSpace, tmp))
+                    {
+                        UISetValue(selectedSpace, tmp);
+                    }
+                    else
+                    {
+                        errorsRemaining--;
+                        Debug.Log("Wrong number");
+                        errorsLabel.text = "Allowed Errors Remaining " + errorsRemaining.ToString();
+                        SetUIToError();
+                        if (errorsRemaining == 0)
+                        {
+                            MoveNext(end);
+                        }
+                    }
+                    UpdateUI();
                 }
-                UpdateUI();
             };
             btn.text = i.ToString();
             btn.style.width = 24;
@@ -239,12 +392,12 @@ public class SudokuController : Game
         {
             for (int j = 0; j < 9; j++)
             {
-                if (sudoku.nums[i, j].locked == true)
+                if (sudoku.nums[i, j].locked)
                 {
                     Label l;
                     if (labelDictionary.TryGetValue(new Tuple<int, int>(i, j), out l))
                     {
-                        l.style.color = new Color(0.3f, 0.3f, 0.3f); ;
+                        l.style.color = col_locked_text;
                         l.text = sudoku.nums[i, j].GetValue().ToString();
                     }
                     VisualElement ve;
@@ -263,7 +416,13 @@ public class SudokuController : Game
         VisualElement ve;
         if (veDictionary.TryGetValue(coords, out ve))
         {
-            ve.style.backgroundColor = new Color(0.6f, 0.6f, 0.6f);
+            if (sudoku.nums[coords.Item1, coords.Item2].locked)
+            {
+                ve.style.backgroundColor = col_locked_selected_background;
+            } else
+            {
+                ve.style.backgroundColor = col_selected_background;
+            }
         }
     }
 
@@ -278,7 +437,7 @@ public class SudokuController : Game
                     VisualElement ve;
                     if (veDictionary.TryGetValue(new Tuple<int, int>(i, j), out ve))
                     {
-                        ve.style.backgroundColor = new Color(0.85f, 0.85f, 1f);
+                        ve.style.backgroundColor = col_locked_background;
                     }
                 } 
                 else
@@ -288,10 +447,10 @@ public class SudokuController : Game
                     {
                         if (sudoku.CheckComplete())
                         {
-                            ve.style.backgroundColor = new Color(0.85f, 1f, 0.85f);
+                            ve.style.backgroundColor = col_success_background;
                         } else
                         {
-                            ve.style.backgroundColor = Color.white;
+                            ve.style.backgroundColor = col_base_background;
                         }
                     }
                 }
@@ -324,10 +483,10 @@ public class SudokuController : Game
             {
                 if (!CheckLocked(p))
                 {
-                    ve.style.backgroundColor = new Color(0.85f, 0.85f, 0.85f);
+                    ve.style.backgroundColor = col_square_selected_background;
                 } else
                 {
-                    ve.style.backgroundColor = new Color(0.75f, 0.75f, 0.9f);
+                    ve.style.backgroundColor = col_locked_selected_by_proxy_background;
                 }
                 
             }
@@ -340,11 +499,11 @@ public class SudokuController : Game
             {
                 if (!CheckLocked(p))
                 {
-                    ve.style.backgroundColor = new Color(0.85f, 0.85f, 0.85f);
+                    ve.style.backgroundColor = col_row_col_selected_background;
                 }
                 else
                 {
-                    ve.style.backgroundColor = new Color(0.75f, 0.75f, 0.9f);
+                    ve.style.backgroundColor = col_locked_selected_by_proxy_background;
                 }
             }
         }
@@ -357,11 +516,11 @@ public class SudokuController : Game
             {
                 if (!CheckLocked(p))
                 {
-                    ve.style.backgroundColor = new Color(0.85f, 0.85f, 0.85f);
+                    ve.style.backgroundColor = col_row_col_selected_background;
                 }
                 else
                 {
-                    ve.style.backgroundColor = new Color(0.75f, 0.75f, 0.9f);
+                    ve.style.backgroundColor = col_locked_selected_by_proxy_background;
                 }
             }
         }
@@ -417,12 +576,13 @@ public class Sudoku
         trueValues = GetIntArray();
         Debug.Log(this.ToString());
         this.Reduce(targetRemovedNumbers);
+        Debug.Log("Numbers removed: " + (81 - this.VisibleNumbers()).ToString());
     }
 
     public void Reduce(int targetRemovedNumbers)
     {
         int removedNumbers = 0;
-        int attempts = 10;
+        int attempts = 20;
         int[,] attemptBackup = this.Backup(); //Remove compiler error
         System.Random rand = new System.Random();
         while (attempts > 0 && removedNumbers <= targetRemovedNumbers) {
@@ -639,6 +799,21 @@ public class Sudoku
         return numbers;
     }
 
+    public int VisibleNumbers()
+    {
+        int n = 0;
+        for (int j = 0; j < 9; j++)
+        {
+            for (int i = 0; i < 9; i++)
+            {
+                if (this.nums[j, i].IsSet())
+                {
+                    n++;
+                }
+            }
+        }
+        return n;
+    }
 }
 
 

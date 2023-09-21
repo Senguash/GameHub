@@ -109,9 +109,20 @@ public abstract class StateMachine : MonoBehaviour
     public State MoveNext(Command command)
     {
         State nextState = GetNext(command);
-        CurrentState.LeaveEvent();
+        try
+        {
+            CurrentState.LeaveEvent();
+        } 
+        catch (Exception) { };
+        
         PreviousState = CurrentState;
-        nextState.EnterEvent();
+
+        try
+        {
+            nextState.EnterEvent();
+        }
+        catch (Exception) { };
+        
         CurrentState = nextState;
         return CurrentState;
     }

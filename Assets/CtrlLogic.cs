@@ -11,6 +11,8 @@ public class CtrlLogic : MonoBehaviour
     VisualElement gameContainer;
     VisualElement pauseMenu;
     VisualElement topBar;
+
+    Game game;
     // Start is called before the first frame update
     void Start()
     {
@@ -118,8 +120,8 @@ public class CtrlLogic : MonoBehaviour
     void EnterSudoku()
     {
         EnterGame();
-        SudokuController sudoku = gameObject.AddComponent(typeof(SudokuController)) as SudokuController;
-        gameContainer.Add(sudoku.root);
+        game = gameObject.AddComponent(typeof(SudokuController)) as SudokuController;
+        gameContainer.Add(game.root);
     }
     void EnterTicTacToe()
     {
@@ -135,18 +137,30 @@ public class CtrlLogic : MonoBehaviour
 
     void FixedUpdate()
     {
-        
+        if (game != null)
+        {
+            if (game.exitInvoked)
+            {
+                game = null;
+                InitMainMenu();
+            }
+        }
     }
 }
 
 public abstract class Game : StateMachine
 {
-
+    public bool exitInvoked = false;
     public VisualElement root;
 
     public Game()
     {
         
+    }
+
+    public void ExitGame()
+    {
+        this.exitInvoked = true;
     }
 
     private void Awake()
