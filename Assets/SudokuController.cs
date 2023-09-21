@@ -3,12 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading;
-using System.Security.Cryptography;
-using Unity.Collections.LowLevel.Unsafe;
-using Unity.VisualScripting;
-using UnityEditor.Experimental;
-using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -20,16 +14,38 @@ public class SudokuController : Game
     Dictionary<Tuple<int, int>, Button> buttonDictionary;
     Dictionary<Tuple<int, int>, VisualElement> veDictionary;
     Dictionary<Tuple<int, int>, Label> labelDictionary;
-    Label selectedNumberLabel;
     Tuple<int, int> selectedSpace;
+
+    Color col_selected;
+    Color col_row_col_box;
+    Color col_locked;
+    Color col_base;
+    Color col_success;
+    Color col_error;
+
+    State newOrContinue = new State();
+    State difficultySelect = new State();
+    State coreGame = new State();
+    Command start = new Command();
+    Command cont = new Command();
 
     Sudoku sudoku;
     // Start is called before the first frame update
     void Start()
     {
+        transitions = new Dictionary<StateTransition, State>()
+        {
+            { new StateTransition(newOrContinue, start), difficultySelect },
+            { new StateTransition(difficultySelect, start), coreGame},
+            { new StateTransition(newOrContinue, cont), coreGame },
+        };
+
+        SetInitialState(newOrContinue);
         sudoku = new Sudoku();
-        sudoku.GenerateRandom();
+        sudoku.GenerateRandom(45);
         Debug.Log(sudoku.ToString());
+
+
         InitSudokuUI();
     }
 
@@ -53,8 +69,35 @@ public class SudokuController : Game
         }*/
     }
 
-    public void InitSudokuUI()
+    private void InitNewGameMenu()
     {
+        bool ifGameExists = false; //To be implemented
+        root.Clear();
+        var ve = new VisualElement();
+        root.Add(ve);
+        var continueButton = new Button();
+        continueButton.text = "Continue";
+        continueButton.clicked += () =>
+        {
+            MoveNext(cont);
+        };
+        ve.Add(continueButton);
+
+        continueButton.SetEnabled(ifGameExists);
+
+        var newButton = new Button();
+        newButton.text = "New Game";
+        newButton.clicked += () =>
+        {
+            MoveNext(start);
+        };
+        ve.Add(newButton);
+    }
+    
+
+    private void InitSudokuUI()
+    {
+        root.Clear();
         gameBoard = new VisualElement();
         gameBoard.style.flexDirection = FlexDirection.Column;
         VisualElement buffer = new VisualElement();
@@ -63,6 +106,7 @@ public class SudokuController : Game
         buffer.Add(errorsLabel);
         errorsLabel.text = "Allowed Errors Remaining " + errorsRemaining.ToString();
         VisualElement ve = new VisualElement();
+        root.Add(ve);
         //ve.style.backgroundColor = Color.gray;
         ve.style.width = Length.Percent(100);
         ve.style.height = Length.Percent(90);
@@ -149,10 +193,7 @@ public class SudokuController : Game
             }
             gameBoard.Add(row);
         }
-        root.Add(ve);
-
-        selectedNumberLabel = new Label();
-        root.Add(selectedNumberLabel);
+        
 
         VisualElement numberSelectionRow = new VisualElement();
         numberSelectionRow.style.flexDirection = FlexDirection.Row;
@@ -187,12 +228,12 @@ public class SudokuController : Game
 
             numberSelectionRow.Add(btn);
         }
-        root.Add(numberSelectionRow);
+        ve.Add(numberSelectionRow);
 
         UpdateUI();
     }
 
-    void UpdateUI()
+    private void UpdateUI()
     {
         for (int i = 0; i < 9; i++)
         {
@@ -216,7 +257,7 @@ public class SudokuController : Game
         }
     }
 
-    void SelectSpace(Tuple<int, int> coords)
+    private void SelectSpace(Tuple<int, int> coords)
     {
         ShowCross(coords);
         VisualElement ve;
@@ -226,7 +267,7 @@ public class SudokuController : Game
         }
     }
 
-    void DeselectSpace(Tuple<int, int> coords)
+    private void DeselectSpace(Tuple<int, int> coords)
     {
         for (int i = 0; i < 9; i++)
         {
@@ -259,7 +300,7 @@ public class SudokuController : Game
         }
     }
 
-    void UISetValue(Tuple<int, int> coords, int value)
+    private void UISetValue(Tuple<int, int> coords, int value)
     {
         Label l;
         if (labelDictionary.TryGetValue(coords, out l))
@@ -268,12 +309,12 @@ public class SudokuController : Game
         }
     }
 
-    bool CheckLocked(Tuple<int, int> coords)
+    private bool CheckLocked(Tuple<int, int> coords)
     {
         return sudoku.nums[coords.Item1, coords.Item2].locked;
     }
 
-    void ShowCross(Tuple<int, int> coords)
+    private void ShowCross(Tuple<int, int> coords)
     {
         List<Tuple<int, int>> pointsInSquare = SudokuHelper.GetPointsInSameSquare(coords);
         foreach (Tuple<int, int> p in pointsInSquare)
@@ -370,19 +411,21 @@ public class Sudoku
         return sudoku;
     }
 
-    public void GenerateRandom()
+    public void GenerateRandom(int targetRemovedNumbers)
     {
         Sudoku.FillSudoku(this);
         trueValues = GetIntArray();
         Debug.Log(this.ToString());
-        this.Reduce(5);
+        this.Reduce(targetRemovedNumbers);
     }
 
-    public void Reduce(int attempts)
+    public void Reduce(int targetRemovedNumbers)
     {
+        int removedNumbers = 0;
+        int attempts = 10;
         int[,] attemptBackup = this.Backup(); //Remove compiler error
         System.Random rand = new System.Random();
-        while (attempts > 0) {
+        while (attempts > 0 && removedNumbers <= targetRemovedNumbers) {
 
             attemptBackup = this.Backup();
 
@@ -394,6 +437,7 @@ public class Sudoku
                 y = rand.Next(0, 9);
             }
             this.nums[x, y].SetValue(0);
+            removedNumbers++;
 
             int counter = 0;
             int[,] checkBackup = this.Backup();
@@ -401,6 +445,7 @@ public class Sudoku
             if (counter != 1)
             {
                 this.RestoreFromBackup(attemptBackup);
+                removedNumbers--;
                 attempts--;
             }
             else

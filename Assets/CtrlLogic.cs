@@ -139,8 +139,7 @@ public class CtrlLogic : MonoBehaviour
     }
 }
 
-
-public abstract class Game : MonoBehaviour
+public abstract class Game : StateMachine
 {
 
     public VisualElement root;
