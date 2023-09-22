@@ -51,14 +51,19 @@ public class SudokuController : Game
             { new StateTransition(coreGame, end), gameOver },
             { new StateTransition(gameOver, start), difficultySelect },
         };
-
-
-        SetInitialState(newOrContinue);
-        InitNewGameMenu();
+        
+        StateChanged += ClearRoot;
         newOrContinue.EnterEvent += InitNewGameMenu;
         difficultySelect.EnterEvent += InitDifficultyMenu;
         coreGame.EnterEvent += InitSudokuUI;
         gameOver.EnterEvent += InitGameOverMenu;
+
+        SetInitialState(newOrContinue);
+    }
+
+    private void ClearRoot()
+    {
+        root.Clear();
     }
 
     // Update is called once per frame
@@ -120,114 +125,76 @@ public class SudokuController : Game
     }
     private void InitGameOverMenu()
     {
-        root.Clear();
-        var ve = new VisualElement();
-        ve.style.justifyContent = Justify.Center;
-        ve.style.height = Length.Percent(100);
-        root.Add(ve);
+        VisualElement ve = UIGenerate.VisualElement(root, Length.Percent(100), Length.Percent(100),  FlexDirection.Column, Align.Stretch, Justify.Center);
 
-        var topVE = new VisualElement();
-        topVE.style.justifyContent = Justify.Center;
-        topVE.style.alignItems = Align.Center;
-        topVE.style.height = Length.Percent(30);
-        ve.Add(topVE);
+        VisualElement topVE = UIGenerate.VisualElement(ve, Length.Percent(100), Length.Percent(30), FlexDirection.Column, Align.Center, Justify.Center);
 
-        var gameOverLabel = new Label("Game Over");
-        gameOverLabel.style.fontSize = 24;
+        var gameOverLabel = UIGenerate.Label(topVE, "Game Over", 24);
         gameOverLabel.style.color = col_game_over_label;
-        topVE.Add(gameOverLabel);
 
-        var tryAgainButton = new Button();
-        tryAgainButton.text = "Try Again";
+        var tryAgainButton = UIGenerate.Button(ve, "Try Again");
         tryAgainButton.clicked += () =>
         {
             MoveNext(start);
         };
-        ve.Add(tryAgainButton);
 
-        var exitButton = new Button();
-        exitButton.text = "Exit";
+        var exitButton = UIGenerate.Button(ve, "Exit");
         exitButton.clicked += () =>
         {
             ExitGame();
         };
-        ve.Add(exitButton);
     }
     private void InitNewGameMenu()
     {
         bool ifGameExists = false; //To be implemented
-        root.Clear();
-        var ve = new VisualElement();
-        ve.style.justifyContent = Justify.Center;
-        //ve.style.alignItems = Align.Center;
-        ve.style.height = Length.Percent(100);
-        root.Add(ve);
-        var continueButton = new Button();
-        continueButton.text = "Continue";
+        VisualElement ve = UIGenerate.VisualElement(root, Length.Percent(100), Length.Percent(100), FlexDirection.Column, Align.Center, Justify.Center );
+        Button continueButton = UIGenerate.Button(ve, "Continue");
         continueButton.clicked += () =>
         {
             MoveNext(cont);
         };
-        ve.Add(continueButton);
-
         continueButton.SetEnabled(ifGameExists);
 
-        var newButton = new Button();
-        newButton.text = "New Game";
+        Button newButton = UIGenerate.Button(ve, "New Game");
         newButton.clicked += () =>
         {
             MoveNext(start);
         };
-        ve.Add(newButton);
     }
 
     private void InitDifficultyMenu()
     {
-        root.Clear();
-        var ve = new VisualElement();
-        ve.style.justifyContent = Justify.Center;
-        //ve.style.alignItems = Align.Center;
-        ve.style.height = Length.Percent(100);
-        root.Add(ve);
-        var diff1Button = new Button();
-        diff1Button.text = "Easy";
+        var ve = UIGenerate.VisualElement(root, Length.Percent(100), Length.Percent(100), FlexDirection.Column, Align.Stretch, Justify.Center);
+
+        var diff1Button = UIGenerate.Button(ve, "Easy");
         diff1Button.clicked += () =>
         {
             StartNewGame(35);
         };
-        ve.Add(diff1Button);
 
-        var diff2Button = new Button();
-        diff2Button.text = "Medium";
+        var diff2Button = UIGenerate.Button(ve, "Medium");
         diff2Button.clicked += () =>
         {
             StartNewGame(40);
         };
-        ve.Add(diff2Button);
 
-        var diff3Button = new Button();
-        diff3Button.text = "Hard";
+        var diff3Button = UIGenerate.Button(ve, "Hard");
         diff3Button.clicked += () =>
         {
             StartNewGame(45);
         };
-        ve.Add(diff3Button);
 
-        var diff4Button = new Button();
-        diff4Button.text = "Very Hard";
+        var diff4Button = UIGenerate.Button(ve, "Very Hard");
         diff4Button.clicked += () =>
         {
             StartNewGame(50);
         };
-        ve.Add(diff4Button);
 
-        var diff5Button = new Button();
-        diff5Button.text = "Extreme";
+        var diff5Button = UIGenerate.Button(ve, "Extreme");
         diff5Button.clicked += () =>
         {
             StartNewGame(60);
         };
-        ve.Add(diff5Button);
     }
 
     private void StartNewGame(int diff)
@@ -241,27 +208,11 @@ public class SudokuController : Game
 
     private void InitSudokuUI()
     {
-        root.Clear();
-        gameBoard = new VisualElement();
-        gameBoard.style.flexDirection = FlexDirection.Column;
-        VisualElement buffer = new VisualElement();
-        buffer.style.alignItems = Align.Center;
-        errorsLabel = new Label();
-        buffer.Add(errorsLabel);
-        errorsLabel.text = "Allowed Errors Remaining " + errorsRemaining.ToString();
-        VisualElement ve = new VisualElement();
-        root.Add(ve);
-        //ve.style.backgroundColor = Color.gray;
-        ve.style.width = Length.Percent(100);
-        ve.style.height = Length.Percent(90);
-        //ve.style.justifyContent = Justify.Center;
-        ve.style.alignItems = Align.Center;
 
-        buffer.style.height = Length.Percent(24);
-        ve.Add(buffer);
-        ve.Add(gameBoard);
-        gameBoard.style.width = 216;
-        gameBoard.style.height = 216;
+        VisualElement ve = UIGenerate.VisualElement(root, Length.Percent(100), Length.Percent(90), FlexDirection.Column, Align.Center, Justify.Center);
+        VisualElement buffer = UIGenerate.VisualElement(ve, Length.Percent(100), Length.Percent(10), FlexDirection.Column, Align.Center);
+        errorsLabel = UIGenerate.Label(buffer, "Allowed Errors Remaining " + errorsRemaining.ToString(), 18);
+        gameBoard = UIGenerate.VisualElement(ve, 216, 216, FlexDirection.Column, Align.Center);
         gameBoard.style.backgroundColor = col_base_background;
 
         buttonDictionary = new Dictionary<Tuple<int, int>, Button>();
@@ -272,32 +223,26 @@ public class SudokuController : Game
 
         for (int i = 0; i < 9; i++)
         {
-            VisualElement row = new VisualElement();
-            row.style.width = 216;
-            row.style.height = 24;
-            row.style.flexDirection = FlexDirection.Row;
+            VisualElement row = UIGenerate.VisualElement(gameBoard, 216, 24, FlexDirection.Row);
             row.AddToClassList("sudoku-row");
             for (int j = 0; j < 9; j++)
             {
-                VisualElement v = new VisualElement();
                 Button btn = new Button();
                 btn.visible = true;
                 btn.style.visibility = Visibility.Hidden;
-                Label label = new Label();
-                
-                label.visible = true;
 
-                label.style.marginTop = -1;
-
+                VisualElement v = new VisualElement();
                 v.style.justifyContent = Justify.Center;
                 v.style.alignItems = Align.Center;
-                label.style.visibility = Visibility.Visible;
-                v.Add(label);
                 v.style.visibility = Visibility.Visible;
                 //v.AddToClassList("sudoku-field");
 
-                btn.Add(v);
+                Label label = new Label();
+                label.visible = true;
+                label.style.marginTop = -1;
+                label.style.visibility = Visibility.Visible;
                 v.Add(label);
+                btn.Add(v);
                 int tmp_i = i;
                 int tmp_j = j;
                 btn.clicked += () => {
@@ -335,16 +280,9 @@ public class SudokuController : Game
                 veDictionary.Add(new Tuple<int, int>(i, j), v);
                 labelDictionary.Add(new Tuple<int, int>(i, j), label);
             }
-            gameBoard.Add(row);
         }
-        
 
-        VisualElement numberSelectionRow = new VisualElement();
-        numberSelectionRow.style.flexDirection = FlexDirection.Row;
-        numberSelectionRow.style.justifyContent = Justify.Center;
-        numberSelectionRow.style.alignItems = Align.Center;
-        numberSelectionRow.style.width = Length.Percent(100);
-        numberSelectionRow.style.height = Length.Percent(10);
+        VisualElement numberSelectionRow = UIGenerate.VisualElement(ve, Length.Percent(100), Length.Percent(10), FlexDirection.Row, Align.Center, Justify.Center);
         for (int i = 1; i < 10; i++)
         {
             VisualElement v = new VisualElement();
@@ -381,8 +319,6 @@ public class SudokuController : Game
 
             numberSelectionRow.Add(btn);
         }
-        ve.Add(numberSelectionRow);
-
         UpdateUI();
     }
 

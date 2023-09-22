@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.VisualScripting;
 
 public class CtrlLogic : MonoBehaviour
 {
@@ -18,6 +19,11 @@ public class CtrlLogic : MonoBehaviour
     {
         Debug.Log("Game start");
         root = GetComponent<UIDocument>().rootVisualElement;
+
+        var background = Resources.Load<Sprite>("Backgrounds/wood1");
+        
+        root.style.backgroundImage = new StyleBackground(background);
+
         StyleSheet uss = Resources.Load<StyleSheet>("StyleSheet");
         root.styleSheets.Add(uss);
         gameContainer = new VisualElement();
@@ -37,27 +43,34 @@ public class CtrlLogic : MonoBehaviour
         pauseMenu.style.display = DisplayStyle.None;
         gameContainer.Clear();
         gameContainer.style.display = DisplayStyle.Flex;
+        gameContainer.style.alignItems = Align.Center;
+
+        Label title = UIGenerate.Label(gameContainer, "Game Hub", 24);
+
         VisualElement selectGamePanel = new VisualElement();
         selectGamePanel.style.justifyContent = Justify.Center;
         selectGamePanel.style.alignItems = Align.Center;
         selectGamePanel.style.height = Length.Percent(100);
+        gameContainer.Add(selectGamePanel);
+
+        ScrollView selectGameView = UIGenerate.ScrollView(selectGamePanel);
 
         Button ludoButton = new Button();
         ludoButton.text = "Play Ludo";
         ludoButton.clicked += () => { EnterLudo(); };
-        selectGamePanel.Add(ludoButton);
+        selectGameView.Add(ludoButton);
 
         Button sudokuButton = new Button();
         sudokuButton.text = "Play Sudoku";
         sudokuButton.clicked += () => { EnterSudoku(); };
-        selectGamePanel.Add(sudokuButton);
+        selectGameView.Add(sudokuButton);
 
         Button ticTacToeButton = new Button();
         ticTacToeButton.text = "Play Tic Tac Toe";
         ticTacToeButton.clicked += () => { EnterTicTacToe(); };
-        selectGamePanel.Add(ticTacToeButton);
+        selectGameView.Add(ticTacToeButton);
 
-        gameContainer.Add(selectGamePanel);
+
     }
 
     VisualElement GenerateTopBar()
@@ -143,6 +156,7 @@ public class CtrlLogic : MonoBehaviour
             {
                 game = null;
                 InitMainMenu();
+
             }
         }
     }

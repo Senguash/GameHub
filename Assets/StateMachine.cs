@@ -8,6 +8,8 @@ public abstract class StateMachine : MonoBehaviour
 
     public delegate void Event();
 
+    public Event StateChanged;
+
     public class State : IEquatable<State>
     {
         public Event EnterEvent;
@@ -94,6 +96,11 @@ public abstract class StateMachine : MonoBehaviour
     public void SetInitialState(State state)
     {
         CurrentState = state;
+        try
+        {
+            CurrentState.EnterEvent();
+        }
+        catch (NullReferenceException) { };
     }
 
     public State GetNext(Command command)
@@ -113,15 +120,21 @@ public abstract class StateMachine : MonoBehaviour
         {
             CurrentState.LeaveEvent();
         } 
-        catch (Exception) { };
-        
+        catch (NullReferenceException) { };
+
+        try
+        {
+            StateChanged();
+        }
+        catch (NullReferenceException) { };
+
         PreviousState = CurrentState;
 
         try
         {
             nextState.EnterEvent();
         }
-        catch (Exception) { };
+        catch (NullReferenceException) { };
         
         CurrentState = nextState;
         return CurrentState;
