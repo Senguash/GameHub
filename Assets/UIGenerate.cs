@@ -22,7 +22,7 @@ public static class UIGenerate
 
         return ve;
     }
-    public static Button Button(VisualElement parent, string text)
+    public static Button Button(VisualElement parent, string text = "")
     {
         Button btn = new Button();
         btn.text = text;

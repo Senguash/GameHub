@@ -55,21 +55,17 @@ public class CtrlLogic : MonoBehaviour
 
         ScrollView selectGameView = UIGenerate.ScrollView(selectGamePanel);
 
-        Button ludoButton = new Button();
-        ludoButton.text = "Play Ludo";
+        Button ludoButton = UIGenerate.Button(selectGameView, "Ludo");
         ludoButton.clicked += () => { EnterLudo(); };
-        selectGameView.Add(ludoButton);
 
-        Button sudokuButton = new Button();
-        sudokuButton.text = "Play Sudoku";
+        Button sudokuButton = UIGenerate.Button(selectGameView, "Sudoku");
         sudokuButton.clicked += () => { EnterSudoku(); };
-        selectGameView.Add(sudokuButton);
 
-        Button ticTacToeButton = new Button();
-        ticTacToeButton.text = "Play Tic Tac Toe";
+        Button ticTacToeButton = UIGenerate.Button(selectGameView, "Tic Tac Toe");
         ticTacToeButton.clicked += () => { EnterTicTacToe(); };
-        selectGameView.Add(ticTacToeButton);
 
+        Button backgammonButton = UIGenerate.Button(selectGameView, "Backgammon");
+        backgammonButton.clicked += () => { EnterBackgammon(); };
 
     }
 
@@ -118,7 +114,7 @@ public class CtrlLogic : MonoBehaviour
         pauseMenu.style.display = DisplayStyle.None;
     }
 
-    void EnterGame()
+    void PrepareEnterGame()
     {
         topBar.style.display = DisplayStyle.Flex;
         gameContainer.Clear();
@@ -126,21 +122,28 @@ public class CtrlLogic : MonoBehaviour
 
     void EnterLudo()
     {
-        EnterGame();
+        PrepareEnterGame();
         LudoController ludo = gameObject.AddComponent(typeof(LudoController)) as LudoController;
         gameContainer.Add(ludo.root);
     }
     void EnterSudoku()
     {
-        EnterGame();
+        PrepareEnterGame();
         game = gameObject.AddComponent(typeof(SudokuController)) as SudokuController;
         gameContainer.Add(game.root);
     }
     void EnterTicTacToe()
     {
-        EnterGame();
+        PrepareEnterGame();
         TicTacToeController tic = gameObject.AddComponent(typeof(TicTacToeController)) as TicTacToeController;
         gameContainer.Add(tic.root);
+    }
+
+    void EnterBackgammon()
+    {
+        PrepareEnterGame();
+        BackgammonController backgammon = gameObject.AddComponent(typeof(BackgammonController)) as BackgammonController;
+        gameContainer.Add(backgammon.root);
     }
     // Update is called once per frame
     void Update()
