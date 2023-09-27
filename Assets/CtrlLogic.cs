@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Unity.VisualScripting;
 
 public class CtrlLogic : MonoBehaviour
 {
@@ -11,11 +12,18 @@ public class CtrlLogic : MonoBehaviour
     VisualElement gameContainer;
     VisualElement pauseMenu;
     VisualElement topBar;
+
+    Game game;
     // Start is called before the first frame update
     void Start()
     {
         Debug.Log("Game start");
         root = GetComponent<UIDocument>().rootVisualElement;
+
+        var background = Resources.Load<Sprite>("Backgrounds/wood1");
+        
+        root.style.backgroundImage = new StyleBackground(background);
+
         StyleSheet uss = Resources.Load<StyleSheet>("StyleSheet");
         root.styleSheets.Add(uss);
         gameContainer = new VisualElement();
@@ -35,27 +43,34 @@ public class CtrlLogic : MonoBehaviour
         pauseMenu.style.display = DisplayStyle.None;
         gameContainer.Clear();
         gameContainer.style.display = DisplayStyle.Flex;
+        gameContainer.style.alignItems = Align.Center;
+
+        Label title = UIGenerate.Label(gameContainer, "Game Hub", 24);
+
         VisualElement selectGamePanel = new VisualElement();
         selectGamePanel.style.justifyContent = Justify.Center;
         selectGamePanel.style.alignItems = Align.Center;
         selectGamePanel.style.height = Length.Percent(100);
+        gameContainer.Add(selectGamePanel);
+
+        ScrollView selectGameView = UIGenerate.ScrollView(selectGamePanel);
 
         Button ludoButton = new Button();
         ludoButton.text = "Play Ludo";
         ludoButton.clicked += () => { EnterLudo(); };
-        selectGamePanel.Add(ludoButton);
+        selectGameView.Add(ludoButton);
 
         Button sudokuButton = new Button();
         sudokuButton.text = "Play Sudoku";
         sudokuButton.clicked += () => { EnterSudoku(); };
-        selectGamePanel.Add(sudokuButton);
+        selectGameView.Add(sudokuButton);
 
         Button ticTacToeButton = new Button();
         ticTacToeButton.text = "Play Tic Tac Toe";
         ticTacToeButton.clicked += () => { EnterTicTacToe(); };
-        selectGamePanel.Add(ticTacToeButton);
+        selectGameView.Add(ticTacToeButton);
 
-        gameContainer.Add(selectGamePanel);
+
     }
 
     VisualElement GenerateTopBar()
@@ -118,8 +133,8 @@ public class CtrlLogic : MonoBehaviour
     void EnterSudoku()
     {
         EnterGame();
-        SudokuController sudoku = gameObject.AddComponent(typeof(SudokuController)) as SudokuController;
-        gameContainer.Add(sudoku.root);
+        game = gameObject.AddComponent(typeof(SudokuController)) as SudokuController;
+        gameContainer.Add(game.root);
     }
     void EnterTicTacToe()
     {
@@ -135,19 +150,31 @@ public class CtrlLogic : MonoBehaviour
 
     void FixedUpdate()
     {
-        
+        if (game != null)
+        {
+            if (game.exitInvoked)
+            {
+                game = null;
+                InitMainMenu();
+
+            }
+        }
     }
 }
 
-
-public abstract class Game : MonoBehaviour
+public abstract class Game : StateMachine
 {
-
+    public bool exitInvoked = false;
     public VisualElement root;
 
     public Game()
     {
         
+    }
+
+    public void ExitGame()
+    {
+        this.exitInvoked = true;
     }
 
     private void Awake()
