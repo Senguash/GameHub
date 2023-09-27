@@ -1,4 +1,5 @@
 using System.Collections;
+using System;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -6,27 +7,78 @@ using UnityEngine.UIElements;
 
 public class LudoController : Game
 {
-    
+
+
+    State newGame = new State("newGame");
+    State coreGame = new State("coreGame");
+    State gameEnd = new State("gameEnd");
+    State player1 = new State("player1");
+    State player2 = new State("player2");
+    State player3 = new State("player3");
+    State player4 = new State("player4");
+    Command start = new Command("start");
+    Command nextPlayer = new Command("nextPlayer");
     // Start is called before the first frame update
     void Start()
+    {
+        transitions = new Dictionary<StateTransition, State>()
+        {
+            { new StateTransition(newGame, start), player1 },
+            { new StateTransition(player1, nextPlayer), player2 },
+            { new StateTransition(player2, nextPlayer), player3 },
+            { new StateTransition(player3, nextPlayer), player4 },
+            { new StateTransition(player4, nextPlayer), player1 },
+        };
+
+        newGame.EnterEvent += InitNewGameMenu;
+        newGame.LeaveEvent += ClearRoot;
+        newGame.LeaveEvent += InitLudoUI;
+        //coreGame.EnterEvent += InitLudoUI;
+        SetInitialState(newGame);
+
+
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+
+    }
+    private void ClearRoot()
+    {
+        root.Clear();
+    }
+    private void InitNewGameMenu()
     {
         LudoGame game = new LudoGame();
         root.Add(new Label("Test"));
         Button startGameBtn = new Button();
         Button addPlayerBtn = new Button();
         addPlayerBtn.text = "Add player";
-        addPlayerBtn.clicked += () => { game.AddPlayer("IDK",false); };
+        addPlayerBtn.clicked += () => { game.AddPlayer("IDK", false); };
         startGameBtn.text = "Start";
-        startGameBtn.clicked += () => { game.StartGame(); };
-
-
+        startGameBtn.clicked += () => { game.StartGame();
+            MoveNext(start);
+        };
         root.Add(addPlayerBtn);
         root.Add(startGameBtn);
     }
-
-    // Update is called once per frame
-    void Update()
+    private void InitLudoUI()
     {
+        Button terningBtn = new Button();
+        terningBtn.text = "Terning";
+        terningBtn.clicked += () =>
+        {
+            System.Random rnd = new System.Random();
+            Debug.Log(rnd.Next(1,7));
+            Debug.Log(rnd.Next(1,7));
+            Debug.Log(CurrentState);
+            //move piece
+            MoveNext(nextPlayer);
+
+        };
+        root.Add(terningBtn);
+        //MoveNext(nextPlayer);
 
     }
 }
@@ -154,7 +206,4 @@ public class LudoPiece
 public class LudoBoard
 {
 
-
-        return 0;
-    }
 }
