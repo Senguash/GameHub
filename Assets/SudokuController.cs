@@ -27,9 +27,10 @@ public class SudokuController : Game
     static Color col_locked_selected_by_proxy_background = new Color(0.7f, 0.7f, 0.85f);
     static Color col_base_background = new Color(1f, 1f, 1f);
     static Color col_base_text = new Color(0f, 0f, 0f);
-    static Color col_success_background = new Color(0.3f, 0.3f, 0.3f);
     static Color col_locked_text = new Color(0.25f, 0.25f, 0.4f);
     static Color col_game_over_label = new Color(0.15f, 0f, 0f);
+    static Color col_success_background = new Color(0.7f, 1f, 0.7f);
+    static Color col_success_text = new Color(0f, 0.2f, 0f);
 
     State newOrContinue = new State("newOrContinue");
     State difficultySelect = new State("difficultySelect");
@@ -193,7 +194,7 @@ public class SudokuController : Game
         var diff5Button = UIGenerate.Button(ve, "Extreme");
         diff5Button.clicked += () =>
         {
-            StartNewGame(60);
+            StartNewGame(55);
         };
     }
 
@@ -211,7 +212,7 @@ public class SudokuController : Game
 
         VisualElement ve = UIGenerate.VisualElement(root, Length.Percent(100), Length.Percent(90), FlexDirection.Column, Align.Center, Justify.Center);
         VisualElement buffer = UIGenerate.VisualElement(ve, Length.Percent(100), Length.Percent(10), FlexDirection.Column, Align.Center);
-        errorsLabel = UIGenerate.Label(buffer, "Allowed Errors Remaining " + errorsRemaining.ToString(), 18);
+        errorsLabel = UIGenerate.Label(buffer, "Allowed Errors Remaining " + errorsRemaining.ToString(), 12);
         gameBoard = UIGenerate.VisualElement(ve, 216, 216, FlexDirection.Column, Align.Center);
         gameBoard.style.backgroundColor = col_base_background;
 
@@ -249,7 +250,11 @@ public class SudokuController : Game
                     UpdateUI();
                     DeselectSpace(selectedSpace); 
                     selectedSpace = new Tuple<int, int>(tmp_i, tmp_j); 
-                    SelectSpace(selectedSpace); 
+                    SelectSpace(selectedSpace);
+                    if (sudoku.CheckComplete())
+                    {
+                        ShowCompleteUI();
+                    }
                 };
                 btn.style.width = 24;
                 btn.style.height = 24;
@@ -309,6 +314,10 @@ public class SudokuController : Game
                     }
                     UpdateUI();
                 }
+                if (sudoku.CheckComplete())
+                {
+                    ShowCompleteUI();
+                }
             };
             btn.text = i.ToString();
             btn.style.width = 24;
@@ -339,7 +348,41 @@ public class SudokuController : Game
                     VisualElement ve;
                     if (veDictionary.TryGetValue(new Tuple<int, int>(i, j), out ve))
                     {
-                        ve.style.backgroundColor = new Color(0.85f, 0.85f, 1f);
+                        ve.style.backgroundColor = col_locked_background;
+                    }
+                }
+            }
+        }
+    }
+
+    private void ShowCompleteUI()
+    {
+        for (int i = 0; i < 9; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                Label l;
+                if (labelDictionary.TryGetValue(new Tuple<int, int>(i, j), out l))
+                {
+                    if (sudoku.nums[i, j].locked)
+                    {
+                        l.style.color = col_locked_text;
+                    } else
+                    {
+                        l.style.color = col_success_text;
+                    }
+                    l.text = sudoku.nums[i, j].GetValue().ToString();
+                }
+                VisualElement ve;
+                if (veDictionary.TryGetValue(new Tuple<int, int>(i, j), out ve))
+                {
+                    if (sudoku.nums[i, j].locked)
+                    {
+                        ve.style.backgroundColor = col_locked_background;
+                    }
+                    else
+                    {
+                        ve.style.backgroundColor = col_success_background;
                     }
                 }
             }
