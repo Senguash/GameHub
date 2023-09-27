@@ -44,7 +44,8 @@ public class LudoGame
         {4,"Yellow" }
     };
     private List<LudoPiece> ludoPieces = new List<LudoPiece>();
-    
+
+        
     public void StartGame()
     {
         Debug.Log("START GAME");
