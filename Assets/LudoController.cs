@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 
 public class LudoController : Game
 {
-    public Dictionary<int, ludo_piece> ludo_pieces = new Dictionary<int, ludo_piece>();
+    
     // Start is called before the first frame update
     void Start()
     {
@@ -36,12 +36,21 @@ public class LudoController : Game
 public class ludo_game
 {
     private List<ludo_player> ludo_players = new List<ludo_player>();
+    //private Dictionary<int, ludo_piece> ludo_pieces = new Dictionary<int, ludo_piece>();
+    private List<ludo_piece> ludo_pieces = new List<ludo_piece>();
 
     public int add_player(ludo_player new_ludo_player) //Returns player ID
     {
         if (ludo_players.Count < 4)//Check if player count exceeds max count of 4
         {
             ludo_players.Add(new_ludo_player);
+            ludo_piece _ludo_piece;
+            for (int i = 0; i < 5; i++)
+            {
+                _ludo_piece = new ludo_piece(-1, new_ludo_player.get_color());
+                ludo_pieces.Add(_ludo_piece);
+                
+            }
             int id = ludo_players.Count - 1;
             return id;//Return the player id
         }
@@ -84,14 +93,14 @@ public class ludo_player
         this.name = name;
         this.color = color;
         this.ai_player = ai_player;
-        ludo_piece _ludo_piece;
-        for (int i = 0; i < 4; i++)
-        {
-            _ludo_piece = new ludo_piece(-1, i);
-            ludo_player_pieces.Add(_ludo_piece);
-            ludoController.ludo_pieces.Add(_ludo_piece);
-
-        }
+    }
+    public int get_color()
+    {
+        return color;
+    }
+    public string get_name()
+    {
+        return name;
     }
 
 }
