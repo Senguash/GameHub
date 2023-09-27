@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -9,14 +10,18 @@ public class LudoController : Game
     // Start is called before the first frame update
     void Start()
     {
-        ludo_game game = new ludo_game();
-        ludo_player player = new ludo_player("test", 1, false);
+        LudoGame game = new LudoGame();
         root.Add(new Label("Test"));
-        Button add_player_btn = new Button();
-        add_player_btn.text = "Add player";
-        add_player_btn.clicked += () => { add_player(game, player); };
-        
-        root.Add(add_player_btn);
+        Button startGameBtn = new Button();
+        Button addPlayerBtn = new Button();
+        addPlayerBtn.text = "Add player";
+        addPlayerBtn.clicked += () => { game.AddPlayer("IDK",false); };
+        startGameBtn.text = "Start";
+        startGameBtn.clicked += () => { game.StartGame(); };
+
+
+        root.Add(addPlayerBtn);
+        root.Add(startGameBtn);
     }
 
     // Update is called once per frame
@@ -24,34 +29,41 @@ public class LudoController : Game
     {
 
     }
-    void add_player(ludo_game game, ludo_player player)
-    {
-        Debug.Log(game.add_player(player));
-        Debug.Log("Player added");
-    }
 }
 
 
 
-public class ludo_game
+public class LudoGame
 {
-    private List<ludo_player> ludo_players = new List<ludo_player>();
+    private List<LudoPlayer> ludoPlayers = new List<LudoPlayer>();
     //private Dictionary<int, ludo_piece> ludo_pieces = new Dictionary<int, ludo_piece>();
-    private List<ludo_piece> ludo_pieces = new List<ludo_piece>();
-
-    public int add_player(ludo_player new_ludo_player) //Returns player ID
+    private readonly Dictionary<int, string> colors = new Dictionary<int, string>() {
+        {1,"Red" },
+        {2,"Green" },
+        {3,"Blue" },
+        {4,"Yellow" }
+    };
+    private List<LudoPiece> ludoPieces = new List<LudoPiece>();
+    
+    public void StartGame()
     {
-        if (ludo_players.Count < 4)//Check if player count exceeds max count of 4
+        Debug.Log("START GAME");
+    }
+    public int AddPlayer(string name, bool aiPlayer) //Returns player ID
+    {
+        if (ludoPlayers.Count < 4)//Check if player count exceeds max count of 4
         {
-            ludo_players.Add(new_ludo_player);
-            ludo_piece _ludo_piece;
-            for (int i = 0; i < 5; i++)
+            LudoPlayer newLudoPlayer = new LudoPlayer(name,ludoPlayers.Count + 1, aiPlayer);
+            ludoPlayers.Add(newLudoPlayer);
+            LudoPiece LudoPiece;
+            for (int i = 0; i < 4; i++)
             {
-                _ludo_piece = new ludo_piece(-1, new_ludo_player.get_color());
-                ludo_pieces.Add(_ludo_piece);
+                LudoPiece = new LudoPiece(-1, newLudoPlayer.GetColor());
+                ludoPieces.Add(LudoPiece);
+                
                 
             }
-            int id = ludo_players.Count - 1;
+            int id = ludoPlayers.Count - 1;
             return id;//Return the player id
         }
         else
@@ -59,78 +71,78 @@ public class ludo_game
             return -1;//Return -1 if player counter is 4
         }
     }
-    public ludo_player get_player(int player_id)//Returns player object
+    public LudoPlayer GetPlayer(int playerId)//Returns player object
     {
-        return ludo_players[player_id];
+        return ludoPlayers[playerId];
     }
-    public _ludo_player _get_player(int _player_id)
+    public LudoPlayer RmovePlayer(int playerId)//Returns removed player object
     {
-        return _ludo_players[_player_id];
-    }
-    public ludo_player remove_player(int player_id)//Returns removed player object
-    {
-        ludo_player ludo_player_to_remove = ludo_players[player_id];
-        ludo_players.RemoveAt(player_id);
-        return ludo_player_to_remove;
+        LudoPlayer ludoPlayerToRemove = ludoPlayers[playerId];
+        ludoPlayers.RemoveAt(playerId);
+        return ludoPlayerToRemove;
     }
 
-    public List<ludo_player> get_player_list(int player_id)//Returns a list of type object _ludo_player
+    public List<LudoPlayer> GetPlayerList()//Returns a list of type object _ludo_player
     {
-        return ludo_players;
+        return ludoPlayers;
     }
 
 }
 
-public class ludo_player
+public class LudoPlayer
 {
     private string name;
     private int color;
-    private bool ai_player;
-    private List<ludo_piece> ludo_player_pieces = new List<ludo_piece>();
+    private bool aiPlayer;
+    //private List<LudoPiece> playerPieces = new List<LudoPiece>();
 
-    public ludo_player(string name, int color, bool ai_player)
+    public LudoPlayer(string name, int color, bool aiPlayer)
     {
         this.name = name;
         this.color = color;
-        this.ai_player = ai_player;
+        this.aiPlayer = aiPlayer;
     }
-    public int get_color()
+    public int GetColor()
     {
         return color;
     }
-    public string get_name()
+    public string GetName()
     {
         return name;
     }
+    public void SetColor(int color)
+    {
+        this.color=color;
+    }
 
 }
-public class ludo_piece
+public class LudoPiece
 {
-    private int absolute_position;
+    private int absolutepPosition;
     private int offset;
     //private bool home;
 
-    public ludo_piece(int absolute_position, int offset)
+    public LudoPiece(int absolutePosition, int offset)
     {
-        this.absolute_position = absolute_position;
+        this.absolutepPosition = absolutePosition;
         this.offset = offset;
     }
 
-    public int get_absolute_position()
+    public int GetAbsolutePosition()
     {
-        return absolute_position;
+        return absolutepPosition;
     }
 
-    public int set_absolute_position(int absolute_position)
+    public int SetAbsolutePosition(int absolutePosition)
     {
-        this.absolute_position = absolute_position;
-        return this.absolute_position;
+        this.absolutepPosition = absolutePosition;
+        return this.absolutepPosition;
     }
-    public int get_offset()
+    public int GetOffset()
     {
         return offset;
     }
-    public int set_offset()
+    public int SetOffset(int offset)
     {
         this.offset = offset;
         return this.offset;
@@ -138,7 +150,7 @@ public class ludo_piece
 }
 
 
-public class ludo_board
+public class LudoBoard
 {
 
 
