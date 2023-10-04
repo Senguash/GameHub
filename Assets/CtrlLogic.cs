@@ -163,10 +163,46 @@ public class CtrlLogic : MonoBehaviour
             }
         }
     }
+
+    private const string filename = "savedata";
+
+    public void Save()
+    {
+        string destination = Application.persistentDataPath + "/" + filename;
+        using (StreamWriter sw = new StreamWriter(destination, false))
+        {
+            sw.Write(JsonUtility.ToJson(this));
+        }
+    }
+
+    public void Load()
+    {
+        string destination = Application.persistentDataPath + "/" + filename;
+        if (File.Exists(destination))
+        {
+            try
+            {
+                using (StreamReader reader = new StreamReader(destination))
+                {
+                    JsonUtility.FromJsonOverwrite(reader.ReadToEnd(), this);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.Log(ex.ToString());
+                File.Delete(destination);
+            }
+        }
+        else
+        {
+            Debug.Log("Save file not found");
+        }
+    }
 }
 
 public abstract class Game : StateMachine
 {
+    private string gameName;
     public bool exitInvoked = false;
     public VisualElement root;
 
