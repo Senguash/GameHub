@@ -1,11 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
-using Unity.VisualScripting;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
-using static UnityEditor.PlayerSettings;
 
 public class BackgammonController : Game
 {
@@ -15,6 +15,7 @@ public class BackgammonController : Game
     Dictionary<int, Button> btnDictionary;
     Backgammon backgammon;
     Button rollButton;
+    VisualElement rollSection;
     Label turnLabel;
     State whiteRollPhase = new State("whiteRollPhase");
     State blackRollPhase = new State("blackRollPhase");
@@ -24,6 +25,10 @@ public class BackgammonController : Game
     List<int> availableDiceRolls = new List<int>();
     int selectedSpace;
     bool activeSelection;
+
+    bool isRolling = false;
+    int rollCounter;
+    int rollTimer;
     void Start()
     {
         blackPieceSprite = Resources.Load<Sprite>("Backgammon/BackgammonPieceBlack");
@@ -31,6 +36,21 @@ public class BackgammonController : Game
         veDictionary = new Dictionary<int, VisualElement>();
         btnDictionary = new Dictionary<int, Button>();
         backgammon = new Backgammon();
+
+        whiteRollPhase.EnterEvent += ResetRollSection;
+        whiteRollPhase.EnterEvent += () =>
+        {
+            turnLabel.text = "Whites turn";
+            turnLabel.style.color = Color.white;
+        };
+        blackRollPhase.EnterEvent += ResetRollSection;
+        blackRollPhase.EnterEvent += () =>
+        {
+            turnLabel.text = "Blacks turn";
+            turnLabel.style.color = Color.black;
+        };
+        whiteMovePhase.EnterEvent = ShowDiceInRollSection;
+        blackMovePhase.EnterEvent = ShowDiceInRollSection;
 
         InitCoreGameUI();
         DrawPiecesOnBoard();
@@ -51,18 +71,19 @@ public class BackgammonController : Game
         Sprite background = Resources.Load<Sprite>("Backgammon/BackgammonBoard");
 
         VisualElement gameVE = UIGenerate.VisualElement(root, Length.Percent(100), Length.Percent(95));
-        turnLabel = UIGenerate.Label(gameVE, "Whites turn");
+        VisualElement turnLabelContainer = UIGenerate.VisualElement(gameVE, Length.Percent(100), Length.Percent(10), FlexDirection.Row, Align.Center);
+        turnLabel = UIGenerate.Label(turnLabelContainer, "", 18);
 
         VisualElement gameBoard = UIGenerate.VisualElement(gameVE, 216, 288, FlexDirection.Column);
         gameBoard.style.backgroundImage = new StyleBackground(background);
 
-        rollButton = UIGenerate.Button(gameVE, "Roll");
+        rollSection = UIGenerate.VisualElement(gameVE, Length.Percent(100), Length.Percent(15), FlexDirection.Row, Align.Center);
+        rollButton = UIGenerate.Button(rollSection, "Roll");
         rollButton.clicked += () =>
         {
             if (IsRollPhase())
             {
                 RollDice();
-                MoveNext(advanceGame);
             } 
         };
 
@@ -150,7 +171,7 @@ public class BackgammonController : Game
         }
         void GenerateBackgammonFieldButton(VisualElement parent, int pos)
         {
-            Button btn = UIGenerate.Button(parent, pos.ToString());
+            Button btn = UIGenerate.Button(parent, "");
             //btn.style.flexDirection = FlexDirection.Row;
             //btn.style.alignItems = Align.Center;
             btnDictionary.Add(pos, btn);
@@ -165,14 +186,27 @@ public class BackgammonController : Game
             VisualElement ve;
             if (pos >= 13)
             {
-                ve = UIGenerate.VisualElement(btn, Length.Percent(100), Length.Percent(100), FlexDirection.Row, Align.Center);
+                ve = UIGenerate.VisualElement(btn, Length.Percent(100), Length.Percent(100), FlexDirection.Row, Align.Center, Justify.FlexStart);
             } else
             {
-                ve = UIGenerate.VisualElement(btn, Length.Percent(100), Length.Percent(100), FlexDirection.RowReverse, Align.Center);
+                ve = UIGenerate.VisualElement(btn, Length.Percent(100), Length.Percent(100), FlexDirection.RowReverse, Align.Center, Justify.FlexStart);
             }
             veDictionary.Add(pos, ve);
         }
 
+    }
+    private void ShowDiceInRollSection()
+    {
+        rollSection.Clear();
+        foreach (int roll in availableDiceRolls)
+        {
+            rollSection.Add(UIGenerate.ShowDice(roll, 42, 8));
+        }
+    }
+    private void ResetRollSection()
+    {
+        rollSection.Clear();
+        rollSection.Add(rollButton);
     }
     private void FieldClicked(int tmp_pos)
     {
@@ -186,6 +220,7 @@ public class BackgammonController : Game
                 }
                 else
                 {
+                    ShowDiceInRollSection();
                     if (availableDiceRolls.Count == 0)
                     {
                         MoveNext(advanceGame);
@@ -296,7 +331,7 @@ public class BackgammonController : Game
                 DrawPiecesOnBoard();
                 if (veDictionary.TryGetValue(pos, out ve))
                 {
-                    ve.style.backgroundColor = new Color(0f, 0f, 1f, 0.2f);
+                    ve.style.backgroundColor = new Color(0f, 0f, 1f, 0.5f);
                 }
                 DrawPossibleMoves();
                 activeSelection = true;
@@ -329,7 +364,7 @@ public class BackgammonController : Game
                         VisualElement ve;
                         if (veDictionary.TryGetValue(i, out ve))
                         {
-                            ve.style.backgroundColor = new Color(1f, 1f, 0.6f, 0.2f);
+                            ve.style.backgroundColor = new Color(1f, 0.8f, 0f, 0.5f);
                         }
                     }
                 }
@@ -346,6 +381,7 @@ public class BackgammonController : Game
             {
                 ve.Clear();
                 ve.style.backgroundColor = new Color(1f, 1f, 1f, 0f);
+                UIGenerate.VisualElement(ve, 8, Length.Percent(100));
                 foreach (BackgammonPiece piece in backgammon.pieces.Where(x => x.GetPosition() == i))
                 {
                     Image img = new Image();
@@ -363,22 +399,52 @@ public class BackgammonController : Game
             }
         }
     }
+
     private void RollDice()
     {
-        availableDiceRolls.Clear();
-        System.Random rng = new System.Random();
-        int d1 = rng.Next(1, 7);
-        int d2 = rng.Next(1, 7);
-        availableDiceRolls.Add(d1);
-        availableDiceRolls.Add(d2);
-        if (d1 == d2)
+        isRolling = true;
+        rollCounter = 15;
+    }
+    private void FixedUpdate()
+    {
+        if (isRolling)
         {
-            availableDiceRolls.Add(d1);
-            availableDiceRolls.Add(d2);
-        }
-        foreach (int roll in  availableDiceRolls)
-        {
-            Debug.Log(roll);
+            if (rollCounter > 0)
+            {
+                if (rollTimer > 0)
+                {
+                    rollTimer--;
+                }
+                else
+                {
+                    rollTimer = 1;
+                    rollCounter--;
+
+                    availableDiceRolls.Clear();
+                    System.Random rng = new System.Random();
+                    int d1 = rng.Next(1, 7);
+                    int d2 = rng.Next(1, 7);
+                    availableDiceRolls.Add(d1);
+                    availableDiceRolls.Add(d2);
+                    ShowDiceInRollSection();
+                }
+            } else
+            {
+                isRolling = false;
+
+                availableDiceRolls.Clear();
+                System.Random rng = new System.Random();
+                int d1 = rng.Next(1, 7);
+                int d2 = rng.Next(1, 7);
+                availableDiceRolls.Add(d1);
+                availableDiceRolls.Add(d2);
+                if (d1 == d2)
+                {
+                    availableDiceRolls.Add(d1);
+                    availableDiceRolls.Add(d2);
+                }
+                MoveNext(advanceGame);
+            }
         }
     }
 }

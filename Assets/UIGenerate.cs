@@ -45,4 +45,21 @@ public static class UIGenerate
         parent.Add(sv);
         return sv;
     }
+
+    public static VisualElement ShowDice(int number, int size = 36, int margin = 0)
+    {
+
+        Image img = new Image();
+        Sprite sprite = Resources.Load<Sprite>("Common/d6-"+number);
+        img.style.width = size;
+        img.style.height = size;
+        img.sprite = sprite;
+        VisualElement ve = new VisualElement();
+        ve.style.width = size + margin;
+        ve.style.height = size + margin;
+        ve.style.alignItems = Align.Center;
+        ve.style.justifyContent = Justify.Center;
+        ve.Add(img);
+        return ve;
+    }
 }
