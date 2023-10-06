@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor.Animations;
 using System.Linq;
+using System.Net.NetworkInformation;
 
 public class LudoController : Game
 {
@@ -103,12 +104,22 @@ public class LudoController : Game
         {
             System.Random rnd = new System.Random();
             int sum = rnd.Next(1,7) + rnd.Next(1,7);
-            Debug.Log(sum);
-            Debug.Log(CurrentState.ToString());
+            Debug.Log("DICE: " + sum);
+            Debug.Log("Current Player: " + CurrentState.ToString());
             LudoPlayer cPlayer = game.ludoPlayers.Where(x => x.GetPlayerState() == CurrentState).First();
-            Debug.Log("SOME PLAYER STUFF: " + cPlayer.GetColor());
+            Debug.Log("Player color: " + cPlayer.GetColor());
+            List<LudoPiece> pieceList = game.GetMoveablePieces(cPlayer.GetColor(), sum);
+            if(pieceList.Count > 0)
+            {
+                game.MovePiece(pieceList.First(),sum);
+            }
+            else
+            {
+                Debug.Log("NO MOVE");
+            }
+           
 
-            game.MovePiece(-1, cPlayer.GetColor(), sum);
+            //game.MovePiece(-1, cPlayer.GetColor(), sum);
             Debug.Log("END CALL");
             //move piece
             
@@ -159,46 +170,38 @@ public class LudoGame
         }
         return 0;
     }
-    public int MovePiece(int absolutepPosition, string color, int amount)
+    public int MovePiece(LudoPiece piece, int diceSum)
     {
-        if(absolutepPosition == -1 && amount == 12)
+        if(piece.GetAbsolutePosition() == -1)
         {
-            //Move a player piece to relative potition 0
-            Debug.Log("Number of pieces: " + ludoPieces.Count);
-            foreach(LudoPiece piece in ludoPieces)
-            {
-                //Debug.Log(ColorNameToKey(color));
-                if(piece.GetOffset() == ColorNameToKey(color))
-                {
-                    //Debug.Log("START MOVE MABEY");
-                    if(piece.GetAbsolutePosition() == absolutepPosition)
-                    {
-                        piece.SetAbsolutePosition(piece.GetOffset());
-                        Debug.Log("MOVE");
-                        PrintPieces();
-                        return 0;
-                    }
-                }
-            }
+            piece.SetAbsolutePosition(piece.GetOffset());
         }
         else
         {
-            Debug.Log("No move");
-            return 1;
+            piece.SetAbsolutePosition(piece.GetAbsolutePosition() + diceSum);
         }
-        return -1;
+        PrintPieces();
+        return 0;
     }
     public List<LudoPiece> GetMoveablePieces(string color, int diceSum)
     {
-
-        return ludoPieces.Where(x => x.GetOffset() == ColorNameToKey(color)).ToList();
+        List<LudoPiece> pieces = ludoPieces.Where(x => x.GetOffset() == ColorNameToKey(color)).ToList();
+        if (diceSum == 12)
+        {
+            return pieces;
+        }
+        else if(diceSum < 12)
+        {
+            return pieces.Where(x => x.GetAbsolutePosition() != -1).ToList();
+        }
+        return null;
     }
     public void PrintPieces()
     {
         foreach (LudoPiece piece in ludoPieces)
         {
-            Debug.Log(piece.GetOffset());
-            Debug.Log(piece.GetAbsolutePosition());
+            Debug.Log("Offset: " + piece.GetOffset());
+            Debug.Log("ABS:    " + piece.GetAbsolutePosition());
         }
     }
 
@@ -276,7 +279,15 @@ public class LudoPiece
     }
     public int GetRelativePosition()
     {
-        return absolutepPosition - offset;
+        if(absolutepPosition == -1)
+        {
+            return -1;
+        }
+        else
+        {
+            return absolutepPosition - offset;
+        }
+        
     }
 }
 
