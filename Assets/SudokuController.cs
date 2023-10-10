@@ -3,11 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 public class SudokuController : Game
 {
+    new public string Name = "Sudoku";
     Label errorsLabel;
     int errorsRemaining;
     int maxErrorsAllowed = 5;
@@ -344,6 +346,8 @@ public class SudokuController : Game
                 }
             }
         }
+        SaveGame(this.sudoku);
+        Debug.Log("Called Save Game");
     }
 
     private void SelectSpace(Tuple<int, int> coords)

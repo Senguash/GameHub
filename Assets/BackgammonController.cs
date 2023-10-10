@@ -9,6 +9,7 @@ using UnityEngine.UIElements;
 
 public class BackgammonController : Game
 {
+    new public string Name = "Backgammon";
     Sprite blackPieceSprite;
     Sprite whitePieceSprite;
     Dictionary<int, VisualElement> veDictionary;
@@ -29,6 +30,7 @@ public class BackgammonController : Game
     bool isRolling = false;
     int rollCounter;
     int rollTimer;
+
     void Start()
     {
         blackPieceSprite = Resources.Load<Sprite>("Backgammon/BackgammonPieceBlack");
@@ -216,7 +218,10 @@ public class BackgammonController : Game
             {
                 if (!TryMovePiece(tmp_pos))
                 {
-                    TrySelectSpace(tmp_pos);
+                    if (!TrySelectSpace(tmp_pos))
+                    {
+                        DrawPiecesOnBoard();
+                    }
                 }
                 else
                 {
@@ -229,7 +234,10 @@ public class BackgammonController : Game
             }
             else
             {
-                TrySelectSpace(tmp_pos);
+                if (!TrySelectSpace(tmp_pos))
+                {
+                    DrawPiecesOnBoard();
+                }
             }
         }
     }
@@ -326,7 +334,7 @@ public class BackgammonController : Game
             if (pieceOnSelected.Where(x => x.owner == GetCurrentTurn()).Any())
             {
                 selectedSpace = pos;
-                Debug.Log("Selected " + pos);
+                //Debug.Log("Selected " + pos);
                 VisualElement ve;
                 DrawPiecesOnBoard();
                 if (veDictionary.TryGetValue(pos, out ve))

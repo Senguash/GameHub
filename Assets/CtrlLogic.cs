@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.VisualScripting;
+using System.Linq;
 
 public class CtrlLogic : MonoBehaviour
 {
@@ -17,7 +18,6 @@ public class CtrlLogic : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Debug.Log("Game start");
         root = GetComponent<UIDocument>().rootVisualElement;
 
         var background = Resources.Load<Sprite>("Backgrounds/wood1");
@@ -39,6 +39,7 @@ public class CtrlLogic : MonoBehaviour
 
     void InitMainMenu()
     {
+        LoadAllPersistent();
         topBar.style.display = DisplayStyle.None;
         pauseMenu.style.display = DisplayStyle.None;
         gameContainer.Clear();
@@ -95,7 +96,7 @@ public class CtrlLogic : MonoBehaviour
         ve.Add(contButton);
         Button quitButton = new Button();
         quitButton.text = "Quit";
-        quitButton.clicked += () => { InitMainMenu();  };
+        quitButton.clicked += () => { SaveAllPersistent(); InitMainMenu();  };
         ve.Add(quitButton);
         return ve;
     }
@@ -159,23 +160,45 @@ public class CtrlLogic : MonoBehaviour
             {
                 game = null;
                 InitMainMenu();
-
             }
         }
     }
 
     private const string filename = "savedata";
+    private List<SaveData> saveData = new List<SaveData>();
 
-    public void Save()
+    public void AddSaveData(SaveData sd)
+    {
+        int index = saveData.FindIndex(i => i.Name == sd.Name);
+        if (index >= 0)
+        {
+            saveData.RemoveAt(index);
+        }
+        saveData.Add(sd);
+    }
+    public bool SaveDataExists(string name)
+    {
+        return saveData.Any(i => i.Name == name);
+    }
+    public void DeleteSaveData(string name)
+    {
+        int index = saveData.FindIndex(i => i.Name == name);
+        if (index >= 0)
+        {
+            saveData.RemoveAt(index);
+        }
+    }
+    public void SaveAllPersistent()
     {
         string destination = Application.persistentDataPath + "/" + filename;
         using (StreamWriter sw = new StreamWriter(destination, false))
         {
-            sw.Write(JsonUtility.ToJson(this));
+            sw.Write(JsonUtility.ToJson(saveData));
         }
+        Debug.Log("Saving to: " + Application.persistentDataPath + "/" + filename);
     }
 
-    public void Load()
+    public void LoadAllPersistent()
     {
         string destination = Application.persistentDataPath + "/" + filename;
         if (File.Exists(destination))
@@ -184,8 +207,9 @@ public class CtrlLogic : MonoBehaviour
             {
                 using (StreamReader reader = new StreamReader(destination))
                 {
-                    JsonUtility.FromJsonOverwrite(reader.ReadToEnd(), this);
+                    JsonUtility.FromJsonOverwrite(reader.ReadToEnd(), saveData);
                 }
+                Debug.Log("Loading from: " + Application.persistentDataPath + "/" + filename);
             }
             catch (Exception ex)
             {
@@ -202,15 +226,27 @@ public class CtrlLogic : MonoBehaviour
 
 public abstract class Game : StateMachine
 {
-    private string gameName;
+    public string Name { get; protected set; }
     public bool exitInvoked = false;
     public VisualElement root;
-
-    public Game()
+    private static CtrlLogic ctrlLogic;
+    public void SaveGame(params object[] data)
     {
-        
+        ctrlLogic.AddSaveData(new SaveData(Name, data));
+    }
+    public void CheckIfNameIsSet()
+    {
+        if (String.IsNullOrEmpty(Name))
+        {
+            throw new Exception("Field Name in class Game must be initialized in Awake or Start method of extention class");
+        }
     }
 
+    public object[] LoadGame()
+    {
+        object[] data = new object[0];
+        return data;
+    }
     public void ExitGame()
     {
         this.exitInvoked = true;
@@ -218,6 +254,7 @@ public abstract class Game : StateMachine
 
     private void Awake()
     {
+        ctrlLogic = FindObjectOfType<CtrlLogic>();
         root = new VisualElement();
         root.style.height = Length.Percent(100);
     }
@@ -225,5 +262,22 @@ public abstract class Game : StateMachine
     public VisualElement GetRootElement()
     {
         return root;
+    }
+}
+
+public class SaveData
+{
+    public readonly string Name;
+    private object[] Data;
+
+    public SaveData(string name, object[] data)
+    {
+        Name = name;
+        Data = data;
+    }
+
+    public object[] GetData()
+    {
+        return this.Data;
     }
 }
