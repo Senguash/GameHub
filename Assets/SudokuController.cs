@@ -152,14 +152,14 @@ public class SudokuController : Game
     }
     private void InitNewGameMenu()
     {
-        bool ifGameExists = false; //To be implemented
         VisualElement ve = UIGenerate.VisualElement(root, Length.Percent(100), Length.Percent(100), FlexDirection.Column, Align.Center, Justify.Center );
         Button continueButton = UIGenerate.Button(ve, "Continue");
         continueButton.clicked += () =>
         {
+            ContinueGame();
             MoveNext(cont);
         };
-        continueButton.SetEnabled(ifGameExists);
+        continueButton.SetEnabled(SaveExists());
 
         Button newButton = UIGenerate.Button(ve, "New Game");
         newButton.clicked += () =>
@@ -209,6 +209,45 @@ public class SudokuController : Game
         sudoku = new Sudoku();
         sudoku.GenerateRandom(diff);
         MoveNext(start);
+    }
+
+    private void ContinueGame()
+    {
+        sudoku = (Sudoku) LoadGame(typeof(Sudoku));
+        Debug.Log(sudoku.ToString());
+        for (int i = 0; i < 9; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                if (sudoku.nums[i, j].locked)
+                {
+                    Label l;
+                    if (labelDictionary.TryGetValue(new Tuple<int, int>(i, j), out l))
+                    {
+                        l.style.color = col_locked_text;
+                        l.text = sudoku.nums[i, j].GetValue().ToString();
+                    }
+                    VisualElement ve;
+                    if (veDictionary.TryGetValue(new Tuple<int, int>(i, j), out ve))
+                    {
+                        ve.style.backgroundColor = new Color(0.85f, 0.85f, 1f);
+                    }
+                } else
+                {
+                    /*Label l;
+                    if (labelDictionary.TryGetValue(new Tuple<int, int>(i, j), out l))
+                    {
+                        l.style.color = col_base_text;
+                        l.text = sudoku.nums[i, j].GetValue().ToString();
+                    }
+                    VisualElement ve;
+                    if (veDictionary.TryGetValue(new Tuple<int, int>(i, j), out ve))
+                    {
+                        ve.style.backgroundColor = col_base_background;
+                    }*/
+                }
+            }
+        }
     }
 
 
@@ -301,7 +340,7 @@ public class SudokuController : Game
                     if (sudoku.SelectValue(selectedSpace, tmp))
                     {
                         UISetValue(selectedSpace, tmp);
-                        SaveGame(this.sudoku);
+                        SaveGame(typeof(Sudoku), this.sudoku);
                     }
                     else
                     {
@@ -514,13 +553,31 @@ public class Sudoku : IXmlSerializable
     {
         StringBuilder sb = new StringBuilder();
         sb.Append(this.ToString(true));
-        sb.Append(",");
+        //sb.Append(",");
         sb.Append(this.ToString(false));
         writer.WriteString(sb.ToString());
     }
 
+    public override string ToString()
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.Append(this.ToString(true));
+        //sb.Append(",");
+        sb.Append(this.ToString(false));
+        return sb.ToString();
+    }
+
     public void ReadXml(XmlReader reader)
     {
+        this.nums = new SudokuNumber[9, 9];
+        for (int i = 0; i < 9; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                nums[i, j] = new SudokuNumber(i, j);
+            }
+        }
+        this.trueValues = new int[9, 9];
         string input = reader.ReadString();
         string[] numbersAsStrings = input.Split(",");
         int x = 0;
@@ -532,7 +589,14 @@ public class Sudoku : IXmlSerializable
             int n;
             if (int.TryParse(numbersAsStrings[i], out n))
             {
-                this.trueValues[x, y] = n;
+                try
+                {
+                    this.trueValues[x, y] = n;
+                } catch (Exception e)
+                {
+                    Debug.Log(x + " " + y);
+                }
+                
             }
         }
         for (int i = 0; i < 81; i++)
@@ -543,6 +607,9 @@ public class Sudoku : IXmlSerializable
             if (int.TryParse(numbersAsStrings[81+i], out n))
             {
                 this.nums[x, y].SetValue(n);
+            } else
+            {
+                this.nums[x, y].SetValue(0);
             }
         }
     }

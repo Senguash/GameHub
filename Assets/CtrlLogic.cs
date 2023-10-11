@@ -167,7 +167,7 @@ public class CtrlLogic : MonoBehaviour
 
     private const string filename = "savedata";
 
-    private SaveData saveData;
+    private List<SaveData> saveData = new List<SaveData>();
 
     public void AddSaveData(SaveData sd)
     {
@@ -190,16 +190,25 @@ public class CtrlLogic : MonoBehaviour
             saveData.RemoveAt(index);
         }
     }
+    public SaveData GetSaveData(string name)
+    {
+        int index = saveData.FindIndex(i => i.name == name);
+        if (index >= 0)
+        {
+            return saveData[index];
+        } else
+        {
+            throw (new Exception("No save data present, check before loading"));
+        }
+    }
     public void SaveAllPersistent()
     {
         string destination = Application.persistentDataPath + "/" + filename;
-        XmlSerializer ser = new XmlSerializer(typeof(SaveData));
+        XmlSerializer ser = new XmlSerializer(typeof(List<SaveData>));
         using (StreamWriter sw = new StreamWriter(destination, false))
         {
             ser.Serialize(sw, saveData);
         }
-        Debug.Log(saveData.First().ToString());
-        Debug.Log(JsonUtility.ToJson(saveData.First()));
         Debug.Log("Saving to: " + Application.persistentDataPath + "/" + filename);
     }
 
@@ -210,9 +219,10 @@ public class CtrlLogic : MonoBehaviour
         {
             try
             {
+                XmlSerializer ser = new XmlSerializer(typeof(List<SaveData>));
                 using (StreamReader reader = new StreamReader(destination))
                 {
-                    JsonUtility.FromJsonOverwrite(reader.ReadToEnd(), saveData);
+                    saveData = (List<SaveData>) ser.Deserialize(reader);
                 }
                 Debug.Log("Loading from: " + Application.persistentDataPath + "/" + filename);
             }
@@ -235,11 +245,16 @@ public abstract class Game : StateMachine
     public bool exitInvoked = false;
     public VisualElement root;
     private static CtrlLogic ctrlLogic;
-    public void SaveGame(params object[] data)
+    public void SaveGame(Type type, object data)
     {
+        XmlSerializer ser = new XmlSerializer(type);
         SaveData sd = new SaveData();
+        using (StringWriter textWriter = new StringWriter())
+        {
+            ser.Serialize(textWriter, data);
+            sd.data = textWriter.ToString();
+        }
         sd.name = Name;
-        sd.data = data;
         ctrlLogic.AddSaveData(sd);
     }
     public void CheckIfNameIsSet()
@@ -250,14 +265,23 @@ public abstract class Game : StateMachine
         }
     }
 
-    public object[] LoadGame()
+    public object LoadGame(Type type)
     {
-        object[] data = new object[0];
-        return data;
+        XmlSerializer ser = new XmlSerializer(type);
+
+        using (StringReader reader = new StringReader(ctrlLogic.GetSaveData(Name).data))
+        {
+            return ser.Deserialize(reader);
+        }
     }
     public void ExitGame()
     {
         this.exitInvoked = true;
+    }
+
+    protected bool SaveExists()
+    {
+        return ctrlLogic.SaveDataExists(Name);
     }
 
     private void Awake()
@@ -273,24 +297,19 @@ public abstract class Game : StateMachine
     }
 }
 [Serializable]
-public class SaveDataItem
+public class SaveData
 {
     [SerializeField]
     public string name;
     [SerializeField]
-    public object[] data;
+    public string data;
 
-    public object[] GetData()
+    public string GetData()
     {
         return this.data;
     }
     public override string ToString()
     {
-        return name + " Data: " + data.ToString();
+        return name + " Data: " + data;
     }
-}
-
-public class SaveData
-{
-    public List<SaveData> saveData = new List<SaveData>();
 }
