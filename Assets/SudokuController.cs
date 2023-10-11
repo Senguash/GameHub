@@ -1,15 +1,18 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
+using System.IO;
 using System.Linq;
 using System.Text;
-using Unity.VisualScripting;
+using System.Xml;
+using System.Xml.Schema;
+using System.Xml.Serialization;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 public class SudokuController : Game
 {
-    new public string Name = "Sudoku";
     Label errorsLabel;
     int errorsRemaining;
     int maxErrorsAllowed = 5;
@@ -45,6 +48,7 @@ public class SudokuController : Game
     // Start is called before the first frame update
     void Start()
     {
+        Name = "Sudoku";
         transitions = new Dictionary<StateTransition, State>()
         {
             { new StateTransition(newOrContinue, start), difficultySelect },
@@ -297,6 +301,7 @@ public class SudokuController : Game
                     if (sudoku.SelectValue(selectedSpace, tmp))
                     {
                         UISetValue(selectedSpace, tmp);
+                        SaveGame(this.sudoku);
                     }
                     else
                     {
@@ -346,8 +351,14 @@ public class SudokuController : Game
                 }
             }
         }
-        SaveGame(this.sudoku);
-        Debug.Log("Called Save Game");
+        /*SaveGame(JsonUtility.ToJson(this.sudoku));
+        XmlSerializer ser = new XmlSerializer(typeof(Sudoku));
+        using (StringWriter textWriter = new StringWriter())
+        {
+            ser.Serialize(textWriter, sudoku);
+            Debug.Log(textWriter.ToString());
+        }
+        Debug.Log("Called Save Game");*/
     }
 
     private void SelectSpace(Tuple<int, int> coords)
@@ -468,12 +479,14 @@ public class SudokuController : Game
 }
 
 
-
-public class Sudoku
+[Serializable]
+public class Sudoku : IXmlSerializable
 {
+    [SerializeField]
     public SudokuNumber[,] nums;
-
+    [SerializeField]
     private int[,] trueValues;
+
     public Sudoku() {
         nums = new SudokuNumber[9,9];
         for (int i = 0; i < 9; i++)
@@ -495,6 +508,48 @@ public class Sudoku
         {
             return false;
         }
+    }
+
+    public void WriteXml(XmlWriter writer)
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.Append(this.ToString(true));
+        sb.Append(",");
+        sb.Append(this.ToString(false));
+        writer.WriteString(sb.ToString());
+    }
+
+    public void ReadXml(XmlReader reader)
+    {
+        string input = reader.ReadString();
+        string[] numbersAsStrings = input.Split(",");
+        int x = 0;
+        int y = 0;
+        for (int i = 0; i < 81; i++)
+        {
+            x = i / 9;
+            y = i % 9;
+            int n;
+            if (int.TryParse(numbersAsStrings[i], out n))
+            {
+                this.trueValues[x, y] = n;
+            }
+        }
+        for (int i = 0; i < 81; i++)
+        {
+            x = i / 9;
+            y = i % 9;
+            int n;
+            if (int.TryParse(numbersAsStrings[81+i], out n))
+            {
+                this.nums[x, y].SetValue(n);
+            }
+        }
+    }
+
+    public XmlSchema GetSchema()
+    {
+        return (null);
     }
 
     Sudoku Copy()
@@ -716,18 +771,24 @@ public class Sudoku
         return true;
     }
 
-    public override string ToString()
+    public string ToString(bool hiddenValues)
     {
         StringBuilder sb = new StringBuilder();
-        sb.Append("Sudoku:" + Environment.NewLine);
-
         for (int j = 0; j < 9; j++)
         {
+            sb.Append("{");
             for (int i = 0; i < 9; i++)
             {
-                sb.Append(this.nums[j, i].ToString());
+                if (hiddenValues)
+                {
+                    sb.Append(trueValues[j, i].ToString());
+                } else
+                {
+                    sb.Append(this.nums[j, i].ToString());
+                }
+                sb.Append(",");
             }
-            sb.Append(Environment.NewLine);
+            sb.Append("}" + Environment.NewLine);
         }   
         return sb.ToString();
     }
@@ -756,13 +817,16 @@ public class Sudoku
     }
 }
 
-
+[Serializable]
 public class SudokuNumber : IEquatable<SudokuNumber>
 {
-    public readonly Tuple<int, int> coordinates;
+    [SerializeField]
+    public Tuple<int, int> coordinates;
 
+    [SerializeField]
     private int value;
-    
+
+    [SerializeField]
     public bool locked { get; private set; }
     
     public SudokuNumber(int x, int y)

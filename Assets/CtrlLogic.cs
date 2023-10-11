@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.VisualScripting;
 using System.Linq;
+using System.Xml.Serialization;
 
 public class CtrlLogic : MonoBehaviour
 {
@@ -165,11 +166,12 @@ public class CtrlLogic : MonoBehaviour
     }
 
     private const string filename = "savedata";
-    private List<SaveData> saveData = new List<SaveData>();
+
+    private SaveData saveData;
 
     public void AddSaveData(SaveData sd)
     {
-        int index = saveData.FindIndex(i => i.Name == sd.Name);
+        int index = saveData.FindIndex(i => i.name == sd.name);
         if (index >= 0)
         {
             saveData.RemoveAt(index);
@@ -178,11 +180,11 @@ public class CtrlLogic : MonoBehaviour
     }
     public bool SaveDataExists(string name)
     {
-        return saveData.Any(i => i.Name == name);
+        return saveData.Any(i => i.name == name);
     }
     public void DeleteSaveData(string name)
     {
-        int index = saveData.FindIndex(i => i.Name == name);
+        int index = saveData.FindIndex(i => i.name == name);
         if (index >= 0)
         {
             saveData.RemoveAt(index);
@@ -191,10 +193,13 @@ public class CtrlLogic : MonoBehaviour
     public void SaveAllPersistent()
     {
         string destination = Application.persistentDataPath + "/" + filename;
+        XmlSerializer ser = new XmlSerializer(typeof(SaveData));
         using (StreamWriter sw = new StreamWriter(destination, false))
         {
-            sw.Write(JsonUtility.ToJson(saveData));
+            ser.Serialize(sw, saveData);
         }
+        Debug.Log(saveData.First().ToString());
+        Debug.Log(JsonUtility.ToJson(saveData.First()));
         Debug.Log("Saving to: " + Application.persistentDataPath + "/" + filename);
     }
 
@@ -226,13 +231,16 @@ public class CtrlLogic : MonoBehaviour
 
 public abstract class Game : StateMachine
 {
-    public string Name { get; protected set; }
+    public string Name;
     public bool exitInvoked = false;
     public VisualElement root;
     private static CtrlLogic ctrlLogic;
     public void SaveGame(params object[] data)
     {
-        ctrlLogic.AddSaveData(new SaveData(Name, data));
+        SaveData sd = new SaveData();
+        sd.name = Name;
+        sd.data = data;
+        ctrlLogic.AddSaveData(sd);
     }
     public void CheckIfNameIsSet()
     {
@@ -264,20 +272,25 @@ public abstract class Game : StateMachine
         return root;
     }
 }
-
-public class SaveData
+[Serializable]
+public class SaveDataItem
 {
-    public readonly string Name;
-    private object[] Data;
-
-    public SaveData(string name, object[] data)
-    {
-        Name = name;
-        Data = data;
-    }
+    [SerializeField]
+    public string name;
+    [SerializeField]
+    public object[] data;
 
     public object[] GetData()
     {
-        return this.Data;
+        return this.data;
     }
+    public override string ToString()
+    {
+        return name + " Data: " + data.ToString();
+    }
+}
+
+public class SaveData
+{
+    public List<SaveData> saveData = new List<SaveData>();
 }
