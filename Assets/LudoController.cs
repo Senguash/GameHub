@@ -94,6 +94,7 @@ public class LudoController : Game
                     transitions.Add(new StateTransition(game.ludoPlayers[i].GetPlayerState(), nextPlayer), game.ludoPlayers[0].GetPlayerState());
                 }
             }
+            game.ludoPlayers[i].GetPlayerState().LeaveEvent += game.NextPlayer;
         }
     }
     private void InitLudoUI()
@@ -102,29 +103,11 @@ public class LudoController : Game
         terningBtn.text = "Terning";
         terningBtn.clicked += () =>
         {
-            System.Random rnd = new System.Random();
-            int sum = rnd.Next(1,7) + rnd.Next(1,7);
-            Debug.Log("DICE: " + sum);
-            Debug.Log("Current Player: " + CurrentState.ToString());
-            LudoPlayer cPlayer = game.ludoPlayers.Where(x => x.GetPlayerState() == CurrentState).First();
-            Debug.Log("Player color: " + cPlayer.GetColor());
-            List<LudoPiece> pieceList = game.GetMoveablePieces(cPlayer.GetColor(), sum);
-            if(pieceList.Count > 0)
-            {
-                game.MovePiece(pieceList.First(),sum);
-            }
-            else
-            {
-                Debug.Log("NO MOVE");
-            }
-           
-
-            //game.MovePiece(-1, cPlayer.GetColor(), sum);
-            Debug.Log("END CALL");
-            //move piece
             
+            terningBtn.SetEnabled(false);
+            game.DiceThrow(CurrentState);
             MoveNext(nextPlayer);
-
+            terningBtn.SetEnabled(true);
         };
         root.Add(terningBtn);
         //MoveNext(nextPlayer);
@@ -204,7 +187,31 @@ public class LudoGame
             Debug.Log("ABS:    " + piece.GetAbsolutePosition());
         }
     }
+    public void NextPlayer()
+    {
 
+
+    }
+    public void DiceThrow(StateMachine.State currentState)
+    {
+        System.Random rnd = new System.Random();
+        int sum = rnd.Next(1, 7) + rnd.Next(1, 7);
+        Debug.Log("DICE: " + sum);
+        Debug.Log("Current Player: " + currentState.ToString());
+        LudoPlayer cPlayer = ludoPlayers.Where(x => x.GetPlayerState() == currentState).First();
+        Debug.Log("Player color: " + cPlayer.GetColor());
+        List<LudoPiece> pieceList = GetMoveablePieces(cPlayer.GetColor(), sum);
+        if (pieceList.Count > 0)
+        {
+            //Make user select
+            MovePiece(pieceList.First(), sum);
+        }
+        else
+        {
+            Debug.Log("NO MOVE");
+        }
+
+    }
 
 }
 
