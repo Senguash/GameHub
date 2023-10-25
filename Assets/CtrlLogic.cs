@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Unity.VisualScripting;
+using System.Linq;
+using System.Xml.Serialization;
 
 public class CtrlLogic : MonoBehaviour
 {
@@ -17,7 +19,6 @@ public class CtrlLogic : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Debug.Log("Game start");
         root = GetComponent<UIDocument>().rootVisualElement;
 
         var background = Resources.Load<Sprite>("Backgrounds/wood1");
@@ -39,6 +40,7 @@ public class CtrlLogic : MonoBehaviour
 
     void InitMainMenu()
     {
+        LoadAllPersistent();
         topBar.style.display = DisplayStyle.None;
         pauseMenu.style.display = DisplayStyle.None;
         gameContainer.Clear();
@@ -55,21 +57,17 @@ public class CtrlLogic : MonoBehaviour
 
         ScrollView selectGameView = UIGenerate.ScrollView(selectGamePanel);
 
-        Button ludoButton = new Button();
-        ludoButton.text = "Play Ludo";
+        Button ludoButton = UIGenerate.Button(selectGameView, "Ludo");
         ludoButton.clicked += () => { EnterLudo(); };
-        selectGameView.Add(ludoButton);
 
-        Button sudokuButton = new Button();
-        sudokuButton.text = "Play Sudoku";
+        Button sudokuButton = UIGenerate.Button(selectGameView, "Sudoku");
         sudokuButton.clicked += () => { EnterSudoku(); };
-        selectGameView.Add(sudokuButton);
 
-        Button ticTacToeButton = new Button();
-        ticTacToeButton.text = "Play Tic Tac Toe";
+        Button ticTacToeButton = UIGenerate.Button(selectGameView, "Tic Tac Toe");
         ticTacToeButton.clicked += () => { EnterTicTacToe(); };
-        selectGameView.Add(ticTacToeButton);
 
+        Button backgammonButton = UIGenerate.Button(selectGameView, "Backgammon");
+        backgammonButton.clicked += () => { EnterBackgammon(); };
 
     }
 
@@ -99,7 +97,7 @@ public class CtrlLogic : MonoBehaviour
         ve.Add(contButton);
         Button quitButton = new Button();
         quitButton.text = "Quit";
-        quitButton.clicked += () => { InitMainMenu();  };
+        quitButton.clicked += () => { SaveAllPersistent(); InitMainMenu();  };
         ve.Add(quitButton);
         return ve;
     }
@@ -118,7 +116,7 @@ public class CtrlLogic : MonoBehaviour
         pauseMenu.style.display = DisplayStyle.None;
     }
 
-    void EnterGame()
+    void PrepareEnterGame()
     {
         topBar.style.display = DisplayStyle.Flex;
         gameContainer.Clear();
@@ -126,21 +124,28 @@ public class CtrlLogic : MonoBehaviour
 
     void EnterLudo()
     {
-        EnterGame();
+        PrepareEnterGame();
         LudoController ludo = gameObject.AddComponent(typeof(LudoController)) as LudoController;
         gameContainer.Add(ludo.root);
     }
     void EnterSudoku()
     {
-        EnterGame();
+        PrepareEnterGame();
         game = gameObject.AddComponent(typeof(SudokuController)) as SudokuController;
         gameContainer.Add(game.root);
     }
     void EnterTicTacToe()
     {
-        EnterGame();
+        PrepareEnterGame();
         TicTacToeController tic = gameObject.AddComponent(typeof(TicTacToeController)) as TicTacToeController;
         gameContainer.Add(tic.root);
+    }
+
+    void EnterBackgammon()
+    {
+        PrepareEnterGame();
+        BackgammonController backgammon = gameObject.AddComponent(typeof(BackgammonController)) as BackgammonController;
+        gameContainer.Add(backgammon.root);
     }
     // Update is called once per frame
     void Update()
@@ -156,29 +161,132 @@ public class CtrlLogic : MonoBehaviour
             {
                 game = null;
                 InitMainMenu();
-
             }
+        }
+    }
+
+    private const string filename = "savedata";
+
+    private List<SaveData> saveData = new List<SaveData>();
+
+    public void AddSaveData(SaveData sd)
+    {
+        int index = saveData.FindIndex(i => i.name == sd.name);
+        if (index >= 0)
+        {
+            saveData.RemoveAt(index);
+        }
+        saveData.Add(sd);
+    }
+    public bool SaveDataExists(string name)
+    {
+        return saveData.Any(i => i.name == name);
+    }
+    public void DeleteSaveData(string name)
+    {
+        int index = saveData.FindIndex(i => i.name == name);
+        if (index >= 0)
+        {
+            saveData.RemoveAt(index);
+        }
+    }
+    public SaveData GetSaveData(string name)
+    {
+        int index = saveData.FindIndex(i => i.name == name);
+        if (index >= 0)
+        {
+            return saveData[index];
+        } else
+        {
+            throw (new Exception("No save data present, check before loading"));
+        }
+    }
+    public void SaveAllPersistent()
+    {
+        string destination = Application.persistentDataPath + "/" + filename;
+        XmlSerializer ser = new XmlSerializer(typeof(List<SaveData>));
+        using (StreamWriter sw = new StreamWriter(destination, false))
+        {
+            ser.Serialize(sw, saveData);
+        }
+        Debug.Log("Saving to: " + Application.persistentDataPath + "/" + filename);
+    }
+
+    public void LoadAllPersistent()
+    {
+        string destination = Application.persistentDataPath + "/" + filename;
+        if (File.Exists(destination))
+        {
+            try
+            {
+                XmlSerializer ser = new XmlSerializer(typeof(List<SaveData>));
+                using (StreamReader reader = new StreamReader(destination))
+                {
+                    saveData = (List<SaveData>) ser.Deserialize(reader);
+                }
+                Debug.Log("Loading from: " + Application.persistentDataPath + "/" + filename);
+            }
+            catch (Exception ex)
+            {
+                Debug.Log(ex.ToString());
+                File.Delete(destination);
+            }
+        }
+        else
+        {
+            Debug.Log("Save file not found");
         }
     }
 }
 
 public abstract class Game : StateMachine
 {
+    public string Name;
     public bool exitInvoked = false;
     public VisualElement root;
-
-    public Game()
+    private static CtrlLogic ctrlLogic;
+    public void SaveGame(Type type, object data)
     {
-        
+        XmlSerializer ser = new XmlSerializer(type);
+        SaveData sd = new SaveData();
+        using (StringWriter textWriter = new StringWriter())
+        {
+            ser.Serialize(textWriter, data);
+            sd.data = textWriter.ToString();
+        }
+        sd.name = Name;
+        ctrlLogic.AddSaveData(sd);
+    }
+    public void CheckIfNameIsSet()
+    {
+        if (String.IsNullOrEmpty(Name))
+        {
+            throw new Exception("Field Name in class Game must be initialized in Awake or Start method of extention class");
+        }
     }
 
+    public object LoadGame(Type type)
+    {
+        XmlSerializer ser = new XmlSerializer(type);
+
+        using (StringReader reader = new StringReader(ctrlLogic.GetSaveData(Name).data))
+        {
+            return ser.Deserialize(reader);
+        }
+    }
     public void ExitGame()
     {
         this.exitInvoked = true;
     }
 
+    protected bool SaveExists()
+    {
+        return ctrlLogic.SaveDataExists(Name);
+    }
+
     private void Awake()
     {
+        ctrlLogic = FindObjectOfType<CtrlLogic>();
         root = new VisualElement();
         root.style.height = Length.Percent(100);
     }
@@ -186,5 +294,22 @@ public abstract class Game : StateMachine
     public VisualElement GetRootElement()
     {
         return root;
+    }
+}
+[Serializable]
+public class SaveData
+{
+    [SerializeField]
+    public string name;
+    [SerializeField]
+    public string data;
+
+    public string GetData()
+    {
+        return this.data;
+    }
+    public override string ToString()
+    {
+        return name + " Data: " + data;
     }
 }
