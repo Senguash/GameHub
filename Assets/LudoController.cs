@@ -221,7 +221,7 @@ public class LudoGame
         {
             int abspos = piece.GetAbsolutePosition();
             int dice = diceSum;
-            if(piece.GetOffset() != 1 && dice + abspos > GetAbsPos(piece.GetOffset() - 2))
+            if(piece.GetOffset() != 1 && abspos >= piece && dice + abspos > GetAbsPos(piece.GetOffset() - 2))//Use Piece relative POS 
             {
                 dice -= (piece.GetOffset() - 1) - abspos;
                 piece.SetAbsolutePosition(52);
