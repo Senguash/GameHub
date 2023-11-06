@@ -8,6 +8,8 @@ using UnityEditor.Animations;
 using System.Linq;
 using System.Net.NetworkInformation;
 
+
+
 public class LudoController : Game
 {
 
@@ -181,13 +183,51 @@ public class LudoGame
     }
     public int MovePiece(LudoPiece piece, int diceSum)
     {
-        if(piece.GetAbsolutePosition() == -1)
+        int maxpos = 57;
+        int finishTiles = 5; 
+        if (piece.GetAbsolutePosition() == -1)
         {
             piece.SetAbsolutePosition(piece.GetOffset());
         }
-        else if(piece.GetAbsolutePosition() == 51 && piece.GetAbsolutePosition()-(piece.GetOffset()-1) != 51)
+        else if (piece.GetAbsolutePosition() == 51 && piece.GetAbsolutePosition() - (piece.GetOffset() - 1) != 51)
         {
             piece.SetAbsolutePosition(diceSum - 1);
+        }
+        else
+        {
+            int abspos;
+            int dice = diceSum;
+            do
+            {
+                abspos = piece.GetAbsolutePosition();
+                if (abspos == maxpos)
+                {
+                    if (diceSum > finishTiles)
+                    {
+                        piece.SetAbsolutePosition(abspos - finishTiles);
+                        dice -= finishTiles;
+                    }
+                    else
+                    {
+                        piece.SetAbsolutePosition(abspos - dice);
+                        dice = 0;
+                    }
+                }
+                else
+                {
+                    if (dice + abspos > maxpos)
+                    {
+                        dice -= (maxpos - abspos);
+                        piece.SetAbsolutePosition(maxpos);
+                    }
+                    else
+                    {
+                        piece.SetAbsolutePosition(abspos + dice);
+                        dice = 0;
+
+                    }
+                }
+            } while (dice != 0);
         }
         CFPI(piece);
         PrintPieces();
