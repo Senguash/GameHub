@@ -144,13 +144,17 @@ public class LudoGame
     }
     private int CFPI(LudoPiece piece)//Check for piece intersection
     {
+        if(piece.GetAbsolutePosition() > 51)//Check if piece is on the final tiles 
+        {
+            return 0;
+        }
         //add check to se if tile is a safe spot
-        List<LudoPiece> pieces = ludoPieces.Where(x => x.GetOffset() != piece.GetOffset()).ToList();
+        List<LudoPiece> pieces = ludoPieces.Where(x => (x.GetOffset() != piece.GetOffset()) && x.GetAbsolutePosition() != -1).ToList();
 
         //Check each piece loaction to se if the intersect
         foreach (LudoPiece cPiece in pieces)
         {
-            if (cPiece.GetAbsolutePosition() != -1)//Check if piece is HOME
+            if (cPiece.GetAbsolutePosition() != -1)//Check if piece is HOME(NOT necessary any more)
             {
                 if (cPiece.GetAbsolutePosition() == piece.GetAbsolutePosition())//Check if the moved piece intersect with another piece
                 {
