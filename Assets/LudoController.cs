@@ -202,7 +202,7 @@ public class LudoGame
                 abspos = piece.GetAbsolutePosition();
                 if (abspos == maxpos)
                 {
-                    if (diceSum > finishTiles)
+                    if (dice > finishTiles)
                     {
                         piece.SetAbsolutePosition(abspos - finishTiles);
                         dice -= finishTiles;
