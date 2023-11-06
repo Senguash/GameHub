@@ -140,6 +140,31 @@ public class LudoGame
     {
         return colors.FirstOrDefault(x => x.Value == color).Key;
     }
+    private int CFPI(LudoPiece piece)//Check for piece intersection
+    {
+        //add check to se if tile is a safe spot
+        List<LudoPiece> pieces = ludoPieces.Where(x => x.GetOffset() != piece.GetOffset()).ToList();
+
+        //Check each piece loaction to se if the intersect
+        foreach (LudoPiece cPiece in pieces)
+        {
+            if (cPiece.GetAbsolutePosition() != -1)//Check if piece is HOME
+            {
+                if(cPiece.GetAbsolutePosition() == piece.GetAbsolutePosition())//Check if the moved piece intersect with another piece
+                {
+                    List<LudoPiece> morePieces = ludoPieces.Where(x => (x.GetOffset() == cPiece.GetOffset() && x.GetAbsolutePosition() == cPiece.GetAbsolutePosition()).ToList();
+                    if (morePieces.count() > 1)//Check to see if the there is more than one piece on the same tile
+                    {
+                        piece.SetAbsolutePosition(-1);//Throw the moved piece HOME
+                    }
+                    else
+                    {
+                        cPiece.SetAbsolutePosition(-1);//Throw other piece HOME
+                    }
+            }
+        }
+        return 0;
+    }
         
     public void StartGame()
     {
@@ -161,21 +186,42 @@ public class LudoGame
         }
         else
         {
-            piece.SetAbsolutePosition(piece.GetAbsolutePosition() + diceSum);
+                //check if piece AbsolutePosition + diceSum gives more than the final positon. if yes that substract the excess amount from the final positon.
+                if (piece.GetAbsolutePosition()! > 51)
+                {
+                    if ((piece.GetAbsolutePosition() - piece.GetOffset) + diceSum > 51)
+                    {
+                        if((piece.GetAbsolutePosition() - piece.GetOffset) + diceSum <= 57) 
+                        {
+                            piece.SetAbsolutePosition((piece.GetAbsolutePosition() - piece.GetOffset) + diceSum);
+                        }
+                        else
+                        {
+                            int rest = (piece.GetAbsolutePosition() - piece.GetOffset) + diceSum)-57;
+                            piece.SetAbsolutePosition(57 - rest);
+                        }
+                    }
+                    else
+                    {
+                        piece.SetAbsolutePosition(piece.GetAbsolutePosition() + diceSum);
+                    }       
+                }
         }
+        CFPI(piece);
         PrintPieces();
         return 0;
     }
     public List<LudoPiece> GetMoveablePieces(string color, int diceSum)
     {
+        //remove pieces that are done/finish
         List<LudoPiece> pieces = ludoPieces.Where(x => x.GetOffset() == ColorNameToKey(color)).ToList();
         if (diceSum == 12)
         {
-            return pieces;
+            return pieces.Where(x => x.GetAbsolutePosition() != 57).ToList();
         }
         else if(diceSum < 12)
         {
-            return pieces.Where(x => x.GetAbsolutePosition() != -1).ToList();
+            return pieces.Where(x => x.GetAbsolutePosition() != -1 && x.GetAbsolutePosition() != 57).ToList();
         }
         return null;
     }
