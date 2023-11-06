@@ -142,6 +142,26 @@ public class LudoGame
     {
         return colors.FirstOrDefault(x => x.Value == color).Key;
     }
+    private int GetAbsPos(int pos)
+    {
+        int tempPos;
+        if(pos >= 0)
+        {
+            return pos;
+        }
+        else
+        {
+            tempPos = 51 - (pos - 1);
+            if(tempPos < 0)
+            {
+                return GetAbsPos(tempPos);
+            }
+            else
+            {
+                return tempPos;
+            }
+        }
+    }
     private int CFPI(LudoPiece piece)//Check for piece intersection
     {
         if(piece.GetAbsolutePosition() > 51)//Check if piece is on the final tiles 
@@ -193,14 +213,20 @@ public class LudoGame
         {
             piece.SetAbsolutePosition(piece.GetOffset());
         }
-        else if (piece.GetAbsolutePosition() == 51 && piece.GetAbsolutePosition() - (piece.GetOffset() - 1) != 51)
+        else if (piece.GetAbsolutePosition()+diceSum > 51 && piece.GetOffset() != 1)
         {
             piece.SetAbsolutePosition(diceSum - 1);
         }
         else
         {
-            int abspos;
+            int abspos = piece.GetAbsolutePosition();
             int dice = diceSum;
+            if(piece.GetOffset() != 1 && dice + abspos > GetAbsPos(piece.GetOffset() - 2))
+            {
+                dice -= (piece.GetOffset() - 1) - abspos;
+                piece.SetAbsolutePosition(52);
+                
+            }
             do
             {
                 abspos = piece.GetAbsolutePosition();
