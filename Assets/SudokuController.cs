@@ -253,7 +253,6 @@ public class SudokuController : Game
 
     private void InitSudokuUI()
     {
-
         VisualElement ve = UIGenerate.VisualElement(root, Length.Percent(100), Length.Percent(90), FlexDirection.Column, Align.Center, Justify.Center);
         VisualElement buffer = UIGenerate.VisualElement(ve, Length.Percent(100), Length.Percent(10), FlexDirection.Column, Align.Center);
         errorsLabel = UIGenerate.Label(buffer, "Allowed Errors Remaining " + errorsRemaining.ToString(), 18);
@@ -340,7 +339,10 @@ public class SudokuController : Game
                     if (sudoku.SelectValue(selectedSpace, tmp))
                     {
                         UISetValue(selectedSpace, tmp);
+<<<<<<< HEAD
                         SaveGame(typeof(Sudoku), this.sudoku);
+=======
+>>>>>>> c3cdfd8 (tried to fix save system)
                     }
                     else
                     {
@@ -414,6 +416,7 @@ public class SudokuController : Game
                 ve.style.backgroundColor = col_selected_background;
             }
         }
+        SaveGame("sudoku", typeof(Sudoku), this.sudoku);
     }
 
     private void DeselectSpace(Tuple<int, int> coords)
@@ -443,8 +446,7 @@ public class SudokuController : Game
                             ve.style.backgroundColor = col_base_background;
                         }
                     }
-                }
-                
+                } 
             }
         }
     }

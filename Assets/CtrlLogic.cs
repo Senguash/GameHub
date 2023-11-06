@@ -7,6 +7,9 @@ using UnityEngine.UIElements;
 using Unity.VisualScripting;
 using System.Linq;
 using System.Xml.Serialization;
+using System.Text;
+using System.Xml;
+using System.Xml.Schema;
 
 public class CtrlLogic : MonoBehaviour
 {
@@ -19,6 +22,7 @@ public class CtrlLogic : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        saveData.InitializeDataList();
         root = GetComponent<UIDocument>().rootVisualElement;
 
         var background = Resources.Load<Sprite>("Backgrounds/wood1");
@@ -167,69 +171,39 @@ public class CtrlLogic : MonoBehaviour
 
     private const string filename = "savedata";
 
-    private List<SaveData> saveData = new List<SaveData>();
+    public SaveData saveData;
 
-    public void AddSaveData(SaveData sd)
-    {
-        int index = saveData.FindIndex(i => i.name == sd.name);
-        if (index >= 0)
-        {
-            saveData.RemoveAt(index);
-        }
-        saveData.Add(sd);
-    }
-    public bool SaveDataExists(string name)
-    {
-        return saveData.Any(i => i.name == name);
-    }
-    public void DeleteSaveData(string name)
-    {
-        int index = saveData.FindIndex(i => i.name == name);
-        if (index >= 0)
-        {
-            saveData.RemoveAt(index);
-        }
-    }
-    public SaveData GetSaveData(string name)
-    {
-        int index = saveData.FindIndex(i => i.name == name);
-        if (index >= 0)
-        {
-            return saveData[index];
-        } else
-        {
-            throw (new Exception("No save data present, check before loading"));
-        }
-    }
+    
     public void SaveAllPersistent()
     {
-        string destination = Application.persistentDataPath + "/" + filename;
-        XmlSerializer ser = new XmlSerializer(typeof(List<SaveData>));
-        using (StreamWriter sw = new StreamWriter(destination, false))
+        //Debug.Log(saveData.GetData("sudoku").ToString());
+        string saveDatafullPath = Application.persistentDataPath + "/" + filename;
+        XmlSerializer ser = new XmlSerializer(typeof(SaveData));
+        using (StreamWriter sw = new StreamWriter(saveDatafullPath, false))
         {
             ser.Serialize(sw, saveData);
         }
-        Debug.Log("Saving to: " + Application.persistentDataPath + "/" + filename);
+        Debug.Log("Saving to: " + saveDatafullPath);
     }
 
     public void LoadAllPersistent()
     {
-        string destination = Application.persistentDataPath + "/" + filename;
-        if (File.Exists(destination))
+        string saveDatafullPath = Application.persistentDataPath + "/" + filename;
+        if (File.Exists(saveDatafullPath))
         {
             try
             {
-                XmlSerializer ser = new XmlSerializer(typeof(List<SaveData>));
-                using (StreamReader reader = new StreamReader(destination))
+                XmlSerializer ser = new XmlSerializer(typeof(SaveData));
+                using (StreamReader sw = new StreamReader(saveDatafullPath, false))
                 {
-                    saveData = (List<SaveData>) ser.Deserialize(reader);
+                    saveData = (SaveData) ser.Deserialize(sw);
                 }
-                Debug.Log("Loading from: " + Application.persistentDataPath + "/" + filename);
+                Debug.Log("Loading from: " + saveDatafullPath);
             }
             catch (Exception ex)
             {
                 Debug.Log(ex.ToString());
-                File.Delete(destination);
+                File.Delete(saveDatafullPath);
             }
         }
         else
@@ -245,43 +219,30 @@ public abstract class Game : StateMachine
     public bool exitInvoked = false;
     public VisualElement root;
     private static CtrlLogic ctrlLogic;
-    public void SaveGame(Type type, object data)
+
+    protected void SaveGame(string key, Type type, IXmlSerializable data)
     {
         XmlSerializer ser = new XmlSerializer(type);
-        SaveData sd = new SaveData();
         using (StringWriter textWriter = new StringWriter())
         {
             ser.Serialize(textWriter, data);
-            sd.data = textWriter.ToString();
-        }
-        sd.name = Name;
-        ctrlLogic.AddSaveData(sd);
-    }
-    public void CheckIfNameIsSet()
-    {
-        if (String.IsNullOrEmpty(Name))
-        {
-            throw new Exception("Field Name in class Game must be initialized in Awake or Start method of extention class");
+            Debug.Log(textWriter.ToString());
+            ctrlLogic.saveData.Save(key, textWriter.ToString());
         }
     }
 
-    public object LoadGame(Type type)
+    protected object LoadGame(string key, Type type)
     {
         XmlSerializer ser = new XmlSerializer(type);
 
-        using (StringReader reader = new StringReader(ctrlLogic.GetSaveData(Name).data))
+        using (StringReader tr = new StringReader(ctrlLogic.saveData.GetData(key)))
         {
-            return ser.Deserialize(reader);
+            return ser.Deserialize(tr);
         }
     }
     public void ExitGame()
     {
         this.exitInvoked = true;
-    }
-
-    protected bool SaveExists()
-    {
-        return ctrlLogic.SaveDataExists(Name);
     }
 
     private void Awake()
@@ -297,12 +258,22 @@ public abstract class Game : StateMachine
     }
 }
 [Serializable]
-public class SaveData
+public class SaveDataItem
 {
     [SerializeField]
-    public string name;
+    public string key;
     [SerializeField]
     public string data;
+
+    public SaveDataItem(string key, string data)
+    {
+        this.key = key;
+        this.data = data;
+    }
+    public void SetData(string data)
+    {
+        this.data = data;
+    }
 
     public string GetData()
     {
@@ -310,6 +281,76 @@ public class SaveData
     }
     public override string ToString()
     {
-        return name + " Data: " + data;
+        return "Key: " + this.key + " Data: " + this.data;
+    }
+}
+[Serializable]
+public class SaveData : IXmlSerializable
+{
+    private List<SaveDataItem> dataList;
+
+    public void InitializeDataList()
+    {
+        dataList = new List<SaveDataItem>();
+    }
+
+    public bool SaveExists(string key)
+    {
+        return dataList.Exists(item => item.key.Equals(key, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public string GetData(string key)
+    {
+        return dataList.Find(item => item.key.Equals(key, StringComparison.OrdinalIgnoreCase)).GetData();
+    }
+
+    public void Save(string key, string data)
+    {
+        if (SaveExists(key))
+        {
+            dataList.Find(item => item.key.Equals(key, StringComparison.OrdinalIgnoreCase)).SetData(data);
+        } else
+        {
+            dataList.Add(new SaveDataItem(key, data));
+        }
+    }
+
+    public void DeleteSave(string key)
+    {
+        dataList.Remove(dataList.Find(item => item.key.Equals(key, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    public void WriteXml(XmlWriter writer)
+    {
+        StringBuilder sb = new StringBuilder();
+        foreach (SaveDataItem sd in dataList)
+        {
+            sb.Append(JsonUtility.ToJson(sd));
+        }
+        sb.Append(";;;");
+        writer.WriteString(sb.ToString());
+    }
+
+    public void ReadXml(XmlReader reader)
+    {
+        string input = reader.ReadString();
+        string[] dataSegments = input.Split(";;;");
+        Debug.Log(dataSegments.Length);
+        foreach(string s in dataSegments)
+        {
+            try
+            {
+                dataList.Add((SaveDataItem)JsonUtility.FromJson(s, typeof(SaveDataItem)));
+            } catch
+            {
+
+            }
+            
+        }
+    }
+
+    public XmlSchema GetSchema()
+    {
+        return (null);
     }
 }
