@@ -150,10 +150,10 @@ public class LudoGame
         {
             if (cPiece.GetAbsolutePosition() != -1)//Check if piece is HOME
             {
-                if(cPiece.GetAbsolutePosition() == piece.GetAbsolutePosition())//Check if the moved piece intersect with another piece
+                if (cPiece.GetAbsolutePosition() == piece.GetAbsolutePosition())//Check if the moved piece intersect with another piece
                 {
-                    List<LudoPiece> morePieces = ludoPieces.Where(x => (x.GetOffset() == cPiece.GetOffset() && x.GetAbsolutePosition() == cPiece.GetAbsolutePosition()).ToList();
-                    if (morePieces.count() > 1)//Check to see if the there is more than one piece on the same tile
+                    List<LudoPiece> morePieces = ludoPieces.Where(x => (x.GetOffset() == cPiece.GetOffset() && x.GetAbsolutePosition() == cPiece.GetAbsolutePosition())).ToList();
+                    if (morePieces.Count() > 1)//Check to see if the there is more than one piece on the same tile
                     {
                         piece.SetAbsolutePosition(-1);//Throw the moved piece HOME
                     }
@@ -161,11 +161,12 @@ public class LudoGame
                     {
                         cPiece.SetAbsolutePosition(-1);//Throw other piece HOME
                     }
+                }
             }
+            return 0;
         }
         return 0;
     }
-        
     public void StartGame()
     {
         Debug.Log("START GAME");
@@ -184,28 +185,9 @@ public class LudoGame
         {
             piece.SetAbsolutePosition(piece.GetOffset());
         }
-        else
+        else if(piece.GetAbsolutePosition() == 51 && piece.GetAbsolutePosition()-(piece.GetOffset()-1) != 51)
         {
-                //check if piece AbsolutePosition + diceSum gives more than the final positon. if yes that substract the excess amount from the final positon.
-                if (piece.GetAbsolutePosition()! > 51)
-                {
-                    if ((piece.GetAbsolutePosition() - piece.GetOffset) + diceSum > 51)
-                    {
-                        if((piece.GetAbsolutePosition() - piece.GetOffset) + diceSum <= 57) 
-                        {
-                            piece.SetAbsolutePosition((piece.GetAbsolutePosition() - piece.GetOffset) + diceSum);
-                        }
-                        else
-                        {
-                            int rest = (piece.GetAbsolutePosition() - piece.GetOffset) + diceSum)-57;
-                            piece.SetAbsolutePosition(57 - rest);
-                        }
-                    }
-                    else
-                    {
-                        piece.SetAbsolutePosition(piece.GetAbsolutePosition() + diceSum);
-                    }       
-                }
+            piece.SetAbsolutePosition(diceSum - 1);
         }
         CFPI(piece);
         PrintPieces();
