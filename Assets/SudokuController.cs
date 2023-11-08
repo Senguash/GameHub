@@ -62,6 +62,7 @@ public class SudokuController : Game
         newOrContinue.EnterEvent += InitNewGameMenu;
         difficultySelect.EnterEvent += InitDifficultyMenu;
         coreGame.EnterEvent += InitSudokuUI;
+        coreGame.EnterEvent += () => { SaveGame("sudoku", typeof(Sudoku), this.sudoku); };
         gameOver.EnterEvent += InitGameOverMenu;
 
         SetInitialState(newOrContinue);
@@ -152,20 +153,21 @@ public class SudokuController : Game
     }
     private void InitNewGameMenu()
     {
-        VisualElement ve = UIGenerate.VisualElement(root, Length.Percent(100), Length.Percent(100), FlexDirection.Column, Align.Center, Justify.Center );
-        Button continueButton = UIGenerate.Button(ve, "Continue");
-        continueButton.clicked += () =>
-        {
-            ContinueGame();
-            MoveNext(cont);
-        };
-        continueButton.SetEnabled(SaveExists());
+        VisualElement ve = UIGenerate.VisualElement(root, Length.Percent(100), Length.Percent(100), FlexDirection.Column, Align.Center, Justify.Center);
 
         Button newButton = UIGenerate.Button(ve, "New Game");
         newButton.clicked += () =>
         {
             MoveNext(start);
         };
+
+        Button continueButton = UIGenerate.Button(ve, "Continue");
+        continueButton.clicked += () =>
+        {
+            MoveNext(cont);
+            ContinueGame();
+        };
+        continueButton.SetEnabled(SaveExists("sudoku"));
     }
 
     private void InitDifficultyMenu()
@@ -213,8 +215,11 @@ public class SudokuController : Game
 
     private void ContinueGame()
     {
-        sudoku = (Sudoku) LoadGame(typeof(Sudoku));
+        ClearRoot();
+        sudoku = (Sudoku) LoadGame("sudoku", typeof(Sudoku));
         Debug.Log(sudoku.ToString());
+        errorsRemaining = maxErrorsAllowed;
+        InitSudokuUI();
         for (int i = 0; i < 9; i++)
         {
             for (int j = 0; j < 9; j++)
@@ -234,17 +239,18 @@ public class SudokuController : Game
                     }
                 } else
                 {
-                    /*Label l;
-                    if (labelDictionary.TryGetValue(new Tuple<int, int>(i, j), out l))
+                    if (sudoku.nums[i, j].GetValue() != 0)
                     {
-                        l.style.color = col_base_text;
-                        l.text = sudoku.nums[i, j].GetValue().ToString();
+                        Debug.Log("THIS HAPPENS SOMETIEMS");
+                        UISetValue(new Tuple<int, int>(i, j), sudoku.nums[i, j].GetValue());
+                        Debug.Log(sudoku.nums[i, j].GetValue());
+                        VisualElement ve;
+                        if (veDictionary.TryGetValue(new Tuple<int, int>(i, j), out ve))
+                        {
+                            Debug.Log("THIS Also happens");
+                            ve.style.backgroundColor = col_base_background;
+                        }
                     }
-                    VisualElement ve;
-                    if (veDictionary.TryGetValue(new Tuple<int, int>(i, j), out ve))
-                    {
-                        ve.style.backgroundColor = col_base_background;
-                    }*/
                 }
             }
         }
@@ -339,10 +345,7 @@ public class SudokuController : Game
                     if (sudoku.SelectValue(selectedSpace, tmp))
                     {
                         UISetValue(selectedSpace, tmp);
-<<<<<<< HEAD
-                        SaveGame(typeof(Sudoku), this.sudoku);
-=======
->>>>>>> c3cdfd8 (tried to fix save system)
+                        SaveGame("sudoku", typeof(Sudoku), this.sudoku);
                     }
                     else
                     {
@@ -392,14 +395,6 @@ public class SudokuController : Game
                 }
             }
         }
-        /*SaveGame(JsonUtility.ToJson(this.sudoku));
-        XmlSerializer ser = new XmlSerializer(typeof(Sudoku));
-        using (StringWriter textWriter = new StringWriter())
-        {
-            ser.Serialize(textWriter, sudoku);
-            Debug.Log(textWriter.ToString());
-        }
-        Debug.Log("Called Save Game");*/
     }
 
     private void SelectSpace(Tuple<int, int> coords)
@@ -416,7 +411,6 @@ public class SudokuController : Game
                 ve.style.backgroundColor = col_selected_background;
             }
         }
-        SaveGame("sudoku", typeof(Sudoku), this.sudoku);
     }
 
     private void DeselectSpace(Tuple<int, int> coords)
@@ -589,16 +583,24 @@ public class Sudoku : IXmlSerializable
             x = i / 9;
             y = i % 9;
             int n;
+            numbersAsStrings[i] = SudokuHelper.GetNumeric(numbersAsStrings[i]);
             if (int.TryParse(numbersAsStrings[i], out n))
             {
                 try
                 {
                     this.trueValues[x, y] = n;
-                } catch (Exception e)
+                    if (n != 0)
+                    {
+                        this.nums[x, y].SetValue(n);
+                    }
+                } catch (Exception)
                 {
                     Debug.Log(x + " " + y);
                 }
                 
+            } else
+            {
+                Debug.Log("Tryparse failed");
             }
         }
         for (int i = 0; i < 81; i++)
@@ -606,6 +608,11 @@ public class Sudoku : IXmlSerializable
             x = i / 9;
             y = i % 9;
             int n;
+            if (numbersAsStrings[81 + i].Contains('L'))
+            {
+                this.nums[x, y].Lock();
+            }
+            numbersAsStrings[81 + i] = SudokuHelper.GetNumeric(numbersAsStrings[81 + i]);
             if (int.TryParse(numbersAsStrings[81+i], out n))
             {
                 this.nums[x, y].SetValue(n);
@@ -854,6 +861,10 @@ public class Sudoku : IXmlSerializable
                 } else
                 {
                     sb.Append(this.nums[j, i].ToString());
+                    if (this.nums[j, i].locked)
+                    {
+                        sb.Append('L');
+                    }
                 }
                 sb.Append(",");
             }
@@ -919,13 +930,15 @@ public class SudokuNumber : IEquatable<SudokuNumber>
 
     public override string ToString()
     {
+        /*
         if (value == 0)
         {
             return "";
         } else
         {
             return value.ToString();
-        }
+        }*/
+        return value.ToString();
     }
     public void SetValue(int value)
     {
@@ -1005,5 +1018,10 @@ public static class SudokuHelper
             return new Tuple<int, int>(6, 9);
         }
         throw new IndexOutOfRangeException();
+    }
+
+    public static string GetNumeric(string input)
+    {
+        return new string(input.Where(c => char.IsDigit(c)).ToArray());
     }
 }

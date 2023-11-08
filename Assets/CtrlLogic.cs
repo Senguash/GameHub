@@ -22,7 +22,6 @@ public class CtrlLogic : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        saveData.InitializeDataList();
         root = GetComponent<UIDocument>().rootVisualElement;
 
         var background = Resources.Load<Sprite>("Backgrounds/wood1");
@@ -40,6 +39,12 @@ public class CtrlLogic : MonoBehaviour
         root.Add(pauseMenu);
         pauseMenu.style.display = DisplayStyle.None;
         InitMainMenu();
+    }
+
+    void OnApplicationQuit()
+    {
+        SaveAllPersistent();
+        Debug.Log("Application ending after " + Time.time + " seconds");
     }
 
     void InitMainMenu()
@@ -164,6 +169,7 @@ public class CtrlLogic : MonoBehaviour
             if (game.exitInvoked)
             {
                 game = null;
+                SaveAllPersistent();
                 InitMainMenu();
             }
         }
@@ -240,6 +246,11 @@ public abstract class Game : StateMachine
             return ser.Deserialize(tr);
         }
     }
+
+    protected bool SaveExists(string key)
+    {
+        return ctrlLogic.saveData.SaveExists(key);
+    }
     public void ExitGame()
     {
         this.exitInvoked = true;
@@ -289,7 +300,7 @@ public class SaveData : IXmlSerializable
 {
     private List<SaveDataItem> dataList;
 
-    public void InitializeDataList()
+    public SaveData()
     {
         dataList = new List<SaveDataItem>();
     }
@@ -325,7 +336,9 @@ public class SaveData : IXmlSerializable
         StringBuilder sb = new StringBuilder();
         foreach (SaveDataItem sd in dataList)
         {
-            sb.Append(JsonUtility.ToJson(sd));
+            sb.Append(sd.key);
+            sb.Append("|");
+            sb.Append(sd.data);
         }
         sb.Append(";;;");
         writer.WriteString(sb.ToString());
@@ -340,7 +353,8 @@ public class SaveData : IXmlSerializable
         {
             try
             {
-                dataList.Add((SaveDataItem)JsonUtility.FromJson(s, typeof(SaveDataItem)));
+                string[] dataItems = s.Split("|");
+                dataList.Add(new SaveDataItem(dataItems[0], dataItems[1]));
             } catch
             {
 
