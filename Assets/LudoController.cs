@@ -12,7 +12,11 @@ using System.Net.NetworkInformation;
 
 public class LudoController : Game
 {
-
+    Sprite redPieceSprite;
+    Sprite greenPieceSprite;
+    Sprite bluePieceSprite;
+    Sprite yellowPieceSprite;
+    Dictionary<int, Button> buttonDictionary;
     State newGame = new State("newGame");
     State gameEnd = new State("gameEnd");
     Command start = new Command("start");
@@ -101,6 +105,86 @@ public class LudoController : Game
     }
     private void InitLudoUI()
     {
+        buttonDictionary = new Dictionary<int, Button>();
+        redPieceSprite = Resources.Load<Sprite>("Ludo/LudoPieceRed");
+        greenPieceSprite = Resources.Load<Sprite>("Ludo/LudoPieceGreen");
+        bluePieceSprite = Resources.Load<Sprite>("Ludo/LudoPieceBlue");
+        yellowPieceSprite = Resources.Load<Sprite>("Ludo/LudoPieceYellow");
+        Sprite gameBoardSprite = Resources.Load<Sprite>("Ludo/istockphoto-493120080-1024x1024");
+        VisualElement gameBoard = UIGenerate.VisualElement(root, 240, 240, FlexDirection.Column);
+        gameBoard.style.backgroundImage = new StyleBackground(gameBoardSprite);
+        for (int y = 0; y < 15; y++)
+        {
+            VisualElement column = UIGenerate.VisualElement(gameBoard, 240, 16, FlexDirection.Row);
+            for  (int x = 0; x < 15; x++)
+            {
+                Button btn = UIGenerate.Button(column, "");
+                btn.ClearClassList();
+                btn.style.width = 24;
+                btn.style.height = 24;
+                int tmp_x = x;
+                int tmp_y = y;
+                btn.style.fontSize = 8;
+                if (x == 6 && y > 8)
+                {
+                    buttonDictionary.Add(14 - y, btn);
+                    btn.text = (14 - y).ToString();
+                    btn.style.backgroundImage = new StyleBackground(redPieceSprite);
+                }
+
+                if (x < 6 && y == 8)
+                {
+                    buttonDictionary.Add(11 - x, btn);
+                    btn.text = (11 - x).ToString();
+                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+                }
+                if (x < 6 && y == 6)
+                {
+                    buttonDictionary.Add(13 + x, btn);
+                    btn.text = (13 + x).ToString();
+                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+                }
+
+                if (x == 6 && y < 6)
+                {
+                    buttonDictionary.Add(24 - y, btn);
+                    btn.text = (24 - y).ToString();
+                    btn.style.backgroundImage = new StyleBackground(yellowPieceSprite);
+                }
+                if (x == 8 && y < 6)
+                {
+                    buttonDictionary.Add(26 + y, btn);
+                    btn.text = (26 + y).ToString();
+                    btn.style.backgroundImage = new StyleBackground(yellowPieceSprite);
+                }
+
+                if (x > 8 && y == 6)
+                {
+                    buttonDictionary.Add(23 + x, btn);
+                    btn.text = (23 + x).ToString();
+                    btn.style.backgroundImage = new StyleBackground(greenPieceSprite);
+                }
+                if (x > 8 && y == 8)
+                {
+                    buttonDictionary.Add(53 - x, btn);
+                    btn.text = (53 - x).ToString();
+                    btn.style.backgroundImage = new StyleBackground(greenPieceSprite);
+                }
+
+                if (x == 8 && y > 8)
+                {
+                    buttonDictionary.Add(36 + y, btn);
+                    btn.text = (36 + y).ToString();
+                    btn.style.backgroundImage = new StyleBackground(redPieceSprite);
+                }
+                btn.clicked += () =>
+                {
+                    Debug.Log("Test");
+                };
+            }
+        }
+
+
         Button terningBtn = new Button();
         terningBtn.text = "Terning";
         terningBtn.clicked += () =>
