@@ -221,9 +221,9 @@ public class LudoGame
         {
             int abspos = piece.GetAbsolutePosition();
             int dice = diceSum;
-            if(piece.GetOffset() != 1 && abspos >= piece && dice + abspos > GetAbsPos(piece.GetOffset() - 2))//Use Piece relative POS 
+            if(piece.GetOffset() != 1 && piece.GetAbsRelativePosition() + diceSum > 51 && piece.GetAbsolutePosition() < 52)//Use Piece relative POS 
             {
-                dice -= (piece.GetOffset() - 1) - abspos;
+                dice -= 52 - piece.GetAbsRelativePosition();
                 piece.SetAbsolutePosition(52);
                 
             }
@@ -382,7 +382,7 @@ public class LudoPiece
         this.offset = offset;
         return this.offset;
     }
-    public int GetRelativePosition()
+    public int GetAbsRelativePosition()
     {
         if(absolutepPosition == -1)
         {
@@ -390,7 +390,14 @@ public class LudoPiece
         }
         else
         {
-            return absolutepPosition - offset;
+            if (absolutepPosition < offset)
+            {
+                return 51 - ((offset - 2) - absolutepPosition);
+            }
+            else
+            {
+                return absolutepPosition - (offset-1);
+            }
         }
         
     }
