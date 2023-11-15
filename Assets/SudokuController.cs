@@ -35,14 +35,17 @@ public class SudokuController : Game
     static Color col_success_background = new Color(0.3f, 0.3f, 0.3f);
     static Color col_locked_text = new Color(0.25f, 0.25f, 0.4f);
     static Color col_game_over_label = new Color(0.15f, 0f, 0f);
+    static Color col_victory_label = new Color(0.9f, 1f, 0.9f);
 
     State newOrContinue = new State("newOrContinue");
     State difficultySelect = new State("difficultySelect");
     State coreGame = new State("coreGame");
+    State victory = new State("victory");
     State gameOver = new State("gameOver");
     Command start = new Command("start");
     Command cont = new Command("cont");
     Command end = new Command("end");
+    Command win = new Command("win");
 
     Sudoku sudoku;
     // Start is called before the first frame update
@@ -55,7 +58,9 @@ public class SudokuController : Game
             { new StateTransition(difficultySelect, start), coreGame},
             { new StateTransition(newOrContinue, cont), coreGame },
             { new StateTransition(coreGame, end), gameOver },
+            { new StateTransition(coreGame, win), victory },
             { new StateTransition(gameOver, start), difficultySelect },
+            { new StateTransition(victory, start), difficultySelect }
         };
         
         StateChanged += ClearRoot;
@@ -64,6 +69,7 @@ public class SudokuController : Game
         coreGame.EnterEvent += InitSudokuUI;
         coreGame.EnterEvent += () => { SaveGame("sudoku", typeof(Sudoku), this.sudoku); };
         gameOver.EnterEvent += InitGameOverMenu;
+        victory.EnterEvent += InitVictoryMenu;
 
         SetInitialState(newOrContinue);
     }
@@ -80,21 +86,6 @@ public class SudokuController : Game
         {
             UpdateErrorUI();
         }
-        /*if (Input.touchCount > 0)
-        {
-            Touch touch = Input.GetTouch(0);
-            Vector2 touchPosition = Camera.main.ScreenToWorldPoint(touch.position);
-            if (touch.phase == TouchPhase.Began)
-            {
-                UpdateUI();
-                for (int i = 0; i < 9; i++)
-                {
-                    for (int j = 0; j < 9; j++)
-                    {
-                    }
-                }
-            }
-        }*/
     }
 
     private void UpdateErrorUI()
@@ -140,6 +131,27 @@ public class SudokuController : Game
         gameOverLabel.style.color = col_game_over_label;
 
         var tryAgainButton = UIGenerate.Button(ve, "Try Again");
+        tryAgainButton.clicked += () =>
+        {
+            MoveNext(start);
+        };
+
+        var exitButton = UIGenerate.Button(ve, "Exit");
+        exitButton.clicked += () =>
+        {
+            ExitGame();
+        };
+    }
+    private void InitVictoryMenu()
+    {
+        VisualElement ve = UIGenerate.VisualElement(root, Length.Percent(100), Length.Percent(100), FlexDirection.Column, Align.Stretch, Justify.Center);
+
+        VisualElement topVE = UIGenerate.VisualElement(ve, Length.Percent(100), Length.Percent(30), FlexDirection.Column, Align.Center, Justify.Center);
+
+        var gameOverLabel = UIGenerate.Label(topVE, "Victory!", 24);
+        gameOverLabel.style.color = col_victory_label;
+
+        var tryAgainButton = UIGenerate.Button(ve, "New Game");
         tryAgainButton.clicked += () =>
         {
             MoveNext(start);
@@ -241,13 +253,11 @@ public class SudokuController : Game
                 {
                     if (sudoku.nums[i, j].GetValue() != 0)
                     {
-                        Debug.Log("THIS HAPPENS SOMETIEMS");
                         UISetValue(new Tuple<int, int>(i, j), sudoku.nums[i, j].GetValue());
                         Debug.Log(sudoku.nums[i, j].GetValue());
                         VisualElement ve;
                         if (veDictionary.TryGetValue(new Tuple<int, int>(i, j), out ve))
                         {
-                            Debug.Log("THIS Also happens");
                             ve.style.backgroundColor = col_base_background;
                         }
                     }
@@ -346,6 +356,7 @@ public class SudokuController : Game
                     {
                         UISetValue(selectedSpace, tmp);
                         SaveGame("sudoku", typeof(Sudoku), this.sudoku);
+                        TransitionIfWin();
                     }
                     else
                     {
@@ -509,6 +520,14 @@ public class SudokuController : Game
                     ve.style.backgroundColor = col_locked_selected_by_proxy_background;
                 }
             }
+        }
+    }
+
+    void TransitionIfWin()
+    {
+        if (this.sudoku.CheckComplete())
+        {
+            MoveNext(win);
         }
     }
 }
