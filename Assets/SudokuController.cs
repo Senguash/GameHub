@@ -271,7 +271,7 @@ public class SudokuController : Game
     {
         VisualElement ve = UIGenerate.VisualElement(root, Length.Percent(100), Length.Percent(90), FlexDirection.Column, Align.Center, Justify.Center);
         VisualElement buffer = UIGenerate.VisualElement(ve, Length.Percent(100), Length.Percent(10), FlexDirection.Column, Align.Center);
-        errorsLabel = UIGenerate.Label(buffer, "Allowed Errors Remaining " + errorsRemaining.ToString(), 18);
+        errorsLabel = UIGenerate.Label(buffer, "Errors Remaining " + errorsRemaining.ToString(), 18);
         gameBoard = UIGenerate.VisualElement(ve, 216, 216, FlexDirection.Column, Align.Center);
         gameBoard.style.backgroundColor = col_base_background;
 
@@ -362,7 +362,7 @@ public class SudokuController : Game
                     {
                         errorsRemaining--;
                         Debug.Log("Wrong number");
-                        errorsLabel.text = "Allowed Errors Remaining " + errorsRemaining.ToString();
+                        errorsLabel.text = "Errors Remaining " + errorsRemaining.ToString();
                         SetUIToError();
                         if (errorsRemaining == 0)
                         {
