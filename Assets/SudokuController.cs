@@ -24,12 +24,12 @@ public class SudokuController : Game
     Dictionary<Tuple<int, int>, Label> labelDictionary;
     Tuple<int, int> selectedSpace;
 
-    static Color col_selected_background = new Color(0.6f, 0.6f, 0.6f);
-    static Color col_row_col_selected_background = new Color(0.7f, 0.7f, 0.7f);
-    static Color col_square_selected_background = new Color(0.8f, 0.8f, 0.8f);
+    static Color col_selected_background = new Color(1f, 1f, 0.6f);
+    static Color col_row_col_selected_background = new Color(0.6f, 0.6f, 0.6f);
+    static Color col_square_selected_background = new Color(0.85f, 0.85f, 0.85f);
     static Color col_locked_background =  new Color(0.85f, 0.85f, 1f);
     static Color col_locked_selected_background = new Color(0.6f, 0.6f, 0.8f);
-    static Color col_locked_selected_by_proxy_background = new Color(0.7f, 0.7f, 0.85f);
+    static Color col_locked_selected_by_proxy_background = new Color(0.6f, 0.6f, 0.85f);
     static Color col_base_background = new Color(1f, 1f, 1f);
     static Color col_base_text = new Color(0f, 0f, 0f);
     static Color col_success_background = new Color(0.3f, 0.3f, 0.3f);
