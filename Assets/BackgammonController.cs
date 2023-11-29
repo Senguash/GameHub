@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static UnityEditor.PlayerSettings;
 
 public class BackgammonController : Game
 {
@@ -22,7 +23,7 @@ public class BackgammonController : Game
     State blackRollPhase = new State("blackRollPhase");
     State whiteMovePhase = new State("whiteMovePhase");
     State blackMovePhase = new State("blackMovePhase");
-    Command advanceGame = new Command("changeTurn");
+    Command advanceGame = new Command("advanceGame");
     List<int> availableDiceRolls = new List<int>();
     int selectedSpace;
     bool activeSelection;
@@ -30,6 +31,9 @@ public class BackgammonController : Game
     bool isRolling = false;
     int rollCounter;
     int rollTimer;
+    const int sendHomeField = -1;
+    const int whiteEndZone = 25;
+    const int blackEndZone = 0;
 
     void Start()
     {
@@ -79,7 +83,7 @@ public class BackgammonController : Game
         VisualElement gameBoard = UIGenerate.VisualElement(gameVE, 216, 288, FlexDirection.Column);
         gameBoard.style.backgroundImage = new StyleBackground(background);
 
-        rollSection = UIGenerate.VisualElement(gameVE, Length.Percent(100), Length.Percent(15), FlexDirection.Row, Align.Center);
+        rollSection = UIGenerate.VisualElement(gameVE, Length.Percent(100), Length.Percent(30), FlexDirection.Column, Align.Center);
         rollButton = UIGenerate.Button(rollSection, "Roll");
         rollButton.clicked += () =>
         {
@@ -89,7 +93,26 @@ public class BackgammonController : Game
             } 
         };
 
-        VisualElement gameBoardTop = UIGenerate.VisualElement(gameBoard, Length.Percent(100), Length.Percent(4));
+        VisualElement gameBoardTop = UIGenerate.VisualElement(gameBoard, Length.Percent(100), Length.Percent(4), FlexDirection.Row);
+        Button gameBoardTopLeftButton = UIGenerate.Button(gameBoardTop, "");
+        btnDictionary.Add(25, gameBoardTopLeftButton);
+        gameBoardTopLeftButton.ClearClassList();
+        gameBoardTopLeftButton.clicked += () =>
+        {
+            FieldClicked(25);
+        };
+        VisualElement gameBoardTopPanelLeft = UIGenerate.VisualElement(gameBoardTopLeftButton, Length.Percent(100), Length.Percent(100), FlexDirection.Row, Align.Center, Justify.Center);
+        veDictionary.Add(25, gameBoardTopPanelLeft);
+        Button gameBoardTopRightButton = UIGenerate.Button(gameBoardTop, "");
+        btnDictionary.Add(0, gameBoardTopRightButton);
+        gameBoardTopRightButton.ClearClassList();
+        gameBoardTopRightButton.clicked += () =>
+        {
+            FieldClicked(0);
+        };
+        VisualElement gameBoardTopPanelRight = UIGenerate.VisualElement(gameBoardTopRightButton, Length.Percent(100), Length.Percent(100), FlexDirection.Row, Align.Center, Justify.Center);
+        veDictionary.Add(0, gameBoardTopPanelRight);
+
         //UIGenerate.Button(gameBoardTop, "Test1");
         VisualElement gameBoardTopSection = UIGenerate.VisualElement(gameBoard, Length.Percent(100), Length.Percent(43), FlexDirection.Row);
 
@@ -99,11 +122,11 @@ public class BackgammonController : Game
         middleButton.style.height   = Length.Percent(6);
         middleButton.clicked += () =>
         {
-            FieldClicked(0);
+            FieldClicked(sendHomeField);
         };
-        btnDictionary.Add(0, middleButton);
+        btnDictionary.Add(sendHomeField, middleButton);
         VisualElement gameBoardMiddle = UIGenerate.VisualElement(middleButton, Length.Percent(100), Length.Percent(100), FlexDirection.Row, Align.Center);
-        veDictionary.Add(0, gameBoardMiddle);
+        veDictionary.Add(sendHomeField, gameBoardMiddle);
 
         //UIGenerate.Button(gameBoardMiddle, "Middle");
         VisualElement gameBoardBottomSection = UIGenerate.VisualElement(gameBoard, Length.Percent(100), Length.Percent(43), FlexDirection.Row);
@@ -200,10 +223,16 @@ public class BackgammonController : Game
     private void ShowDiceInRollSection()
     {
         rollSection.Clear();
+        VisualElement diceContainer = UIGenerate.VisualElement(rollSection, Length.Percent(100), Length.Percent(50), FlexDirection.Row);
         foreach (int roll in availableDiceRolls)
         {
-            rollSection.Add(UIGenerate.ShowDice(roll, 42, 8));
+            diceContainer.Add(UIGenerate.ShowDice(roll, 42, 8));
         }
+        Button btn = UIGenerate.Button(rollSection, "End Turn");
+        btn.clicked += () =>
+        {
+            MoveNext(advanceGame);
+        };
     }
     private void ResetRollSection()
     {
@@ -214,7 +243,7 @@ public class BackgammonController : Game
     {
         if (!IsRollPhase())
         {
-            if (activeSelection && (!HasToMoveFromHome() || selectedSpace == 0))
+            if (activeSelection && (!HasToMoveFromHome() || selectedSpace == sendHomeField))
             {
                 if (!TryMovePiece(tmp_pos))
                 {
@@ -243,7 +272,7 @@ public class BackgammonController : Game
     }
     private bool HasToMoveFromHome()
     {
-        List<BackgammonPiece> pieceOnSelected = backgammon.pieces.Where(x => x.GetPosition() == 0).ToList();
+        List<BackgammonPiece> pieceOnSelected = backgammon.pieces.Where(x => x.GetPosition() == sendHomeField).ToList();
         foreach (BackgammonPiece piece in pieceOnSelected)
         {
             if (piece.owner == GetCurrentTurn())
@@ -265,7 +294,8 @@ public class BackgammonController : Game
         }
         foreach (int roll in availableDiceRolls)
         {
-            if ((selectedSpace + (roll * modifier) == targetPos) || ((selectedSpace == 0 && !GetCurrentTurn()) && (selectedSpace + 25 + (roll * modifier) == targetPos)) ) 
+            if ((selectedSpace + (roll * modifier) == targetPos) || ((selectedSpace == sendHomeField && !GetCurrentTurn()) && (selectedSpace + 24 + (roll * modifier) == targetPos))
+                    || ((selectedSpace == sendHomeField && GetCurrentTurn()) && (selectedSpace + 1 + (roll * modifier) == targetPos)))
             {
                 if (IsValidMove(targetPos))
                 {
@@ -275,7 +305,7 @@ public class BackgammonController : Game
                     {
                         if (piece.owner != GetCurrentTurn())
                         {
-                            piece.SetPosition(0);
+                            piece.SetPosition(sendHomeField);
                         }
                     }
                     activeSelection = false;
@@ -288,6 +318,26 @@ public class BackgammonController : Game
     }
     private bool IsValidMove(int targetPos)
     {
+        if (targetPos == 25)
+        { 
+            if (backgammon.IsPlayerAllowedToMoveToEndZone(GetCurrentTurn()))
+            {
+                if (GetCurrentTurn())
+                {
+                    return true;
+                }
+            }
+        }
+        else if (targetPos == 0)
+        {
+            if (backgammon.IsPlayerAllowedToMoveToEndZone(GetCurrentTurn()))
+            {
+                if (!GetCurrentTurn())
+                {
+                    return true;
+                }
+            }
+        }
         List<BackgammonPiece> pieceOnSelected = backgammon.pieces.Where(x => x.GetPosition() == targetPos).ToList();
         if (pieceOnSelected.Count > 1)
         {
@@ -361,13 +411,15 @@ public class BackgammonController : Game
         {
             modifier = -1;
         }
-        for (int i = 1; i < 25; i++)
+        for (int i = 0; i < 26; i++)
         {
+
             foreach (int roll in availableDiceRolls)
             {
-                if ((selectedSpace + (roll * modifier) == i) || ((selectedSpace == 0 && !GetCurrentTurn()) && (selectedSpace + 25 + (roll * modifier) == i)))
+                if ((selectedSpace + (roll * modifier) == i) || ((selectedSpace == sendHomeField && !GetCurrentTurn()) && (selectedSpace + 24 + (roll * modifier) == i)) 
+                    || ((selectedSpace == sendHomeField && GetCurrentTurn()) && (selectedSpace + 1 + (roll * modifier) == i)))
                 {
-                    if (IsValidMove(i) && (selectedSpace == 0 || !HasToMoveFromHome()))
+                    if (IsValidMove(i) && (selectedSpace == sendHomeField || !HasToMoveFromHome()))
                     {
                         VisualElement ve;
                         if (veDictionary.TryGetValue(i, out ve))
@@ -381,7 +433,7 @@ public class BackgammonController : Game
     }
     private void DrawPiecesOnBoard()
     {
-        for (int i = 0; i < 25; i++)
+        for (int i = -1; i < 26; i++)
         {
             int pieceCount = backgammon.pieces.Where(x =>  x.GetPosition() == i).Count();
             VisualElement ve;
@@ -484,6 +536,28 @@ public class Backgammon
             pieces.Add(new BackgammonPiece(true, 13));
         }
     }
+    public bool IsPlayerAllowedToMoveToEndZone(bool player)
+    {
+        bool result = true;
+        foreach (BackgammonPiece piece in pieces.Where(x => x.GetOwner() == player))
+        {
+            if (player) //White 
+            {
+                if (piece.GetPosition() < 19)
+                {
+                    result = false;
+                }
+            } else //Black
+            {
+                if (piece.GetPosition() > 6)
+                {
+                    result = false;
+                }
+            }
+        }
+        Debug.Log("Player can move to end zone: " + result.ToString());
+        return result;
+    }
 }
 
 public class BackgammonPiece
@@ -502,5 +576,9 @@ public class BackgammonPiece
     public void SetPosition(int position)
     {
         this.position = position;
+    }
+    public bool GetOwner()
+    {
+        return this.owner;
     }
 }
