@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static StateMachine;
 
 public abstract class StateMachine : MonoBehaviour
 {
@@ -113,9 +114,15 @@ public abstract class StateMachine : MonoBehaviour
         return nextState;
     }
 
-    public State MoveNext(Command command)
+    public State MoveNext(object cmdOrState)
     {
-        State nextState = GetNext(command);
+        State nextState;
+        if (cmdOrState.GetType() == typeof(Command))  {
+            nextState = GetNext(cmdOrState as Command);
+        } else
+        {
+            nextState = cmdOrState as State;
+        }
         try
         {
             CurrentState.LeaveEvent();
