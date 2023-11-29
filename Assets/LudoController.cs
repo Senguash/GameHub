@@ -28,7 +28,9 @@ public class LudoController : Game
         {3,"Blue" },
         {4,"Yellow" }
     };
-    
+
+
+
     private LudoGame game = new LudoGame();
     void Start()
     {
@@ -100,16 +102,19 @@ public class LudoController : Game
                     transitions.Add(new StateTransition(game.ludoPlayers[i].GetPlayerState(), nextPlayer), game.ludoPlayers[0].GetPlayerState());
                 }
             }
-            game.ludoPlayers[i].GetPlayerState().LeaveEvent += game.NextPlayer;
+            game.ludoPlayers[i].GetPlayerState().LeaveEvent += UpdateUI;
+            //game.ludoPlayers[i].GetPlayerState().LeaveEvent += game.NextPlayer;
         }
     }
     private void InitLudoUI()
     {
+
         buttonDictionary = new Dictionary<int, Button>();
         redPieceSprite = Resources.Load<Sprite>("Ludo/LudoPieceRed");
         greenPieceSprite = Resources.Load<Sprite>("Ludo/LudoPieceGreen");
         bluePieceSprite = Resources.Load<Sprite>("Ludo/LudoPieceBlue");
         yellowPieceSprite = Resources.Load<Sprite>("Ludo/LudoPieceYellow");
+
         Sprite gameBoardSprite = Resources.Load<Sprite>("Ludo/istockphoto-493120080-1024x1024");
         VisualElement gameBoard = UIGenerate.VisualElement(root, 240, 240, FlexDirection.Column);
         gameBoard.style.backgroundImage = new StyleBackground(gameBoardSprite);
@@ -122,60 +127,63 @@ public class LudoController : Game
                 btn.ClearClassList();
                 btn.style.width = 24;
                 btn.style.height = 24;
-                int tmp_x = x;
-                int tmp_y = y;
                 btn.style.fontSize = 8;
                 if (x == 6 && y > 8)
                 {
                     buttonDictionary.Add(14 - y, btn);
+                    int tmp = 14 - y;
+                    btn.clicked += () =>
+                    {
+                        //SomeFunc(tmp);
+                    };
                     btn.text = (14 - y).ToString();
-                    btn.style.backgroundImage = new StyleBackground(redPieceSprite);
+                    //btn.style.backgroundImage = new StyleBackground(redPieceSprite);
                 }
 
                 if (x < 6 && y == 8)
                 {
                     buttonDictionary.Add(11 - x, btn);
                     btn.text = (11 - x).ToString();
-                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+                    //btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
                 }
                 if (x < 6 && y == 6)
                 {
                     buttonDictionary.Add(13 + x, btn);
                     btn.text = (13 + x).ToString();
-                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+                    //btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
                 }
 
                 if (x == 6 && y < 6)
                 {
                     buttonDictionary.Add(24 - y, btn);
                     btn.text = (24 - y).ToString();
-                    btn.style.backgroundImage = new StyleBackground(yellowPieceSprite);
+                    //btn.style.backgroundImage = new StyleBackground(yellowPieceSprite);
                 }
                 if (x == 8 && y < 6)
                 {
                     buttonDictionary.Add(26 + y, btn);
                     btn.text = (26 + y).ToString();
-                    btn.style.backgroundImage = new StyleBackground(yellowPieceSprite);
+                    //btn.style.backgroundImage = new StyleBackground(yellowPieceSprite);
                 }
 
                 if (x > 8 && y == 6)
                 {
                     buttonDictionary.Add(23 + x, btn);
                     btn.text = (23 + x).ToString();
-                    btn.style.backgroundImage = new StyleBackground(greenPieceSprite);
+                    //btn.style.backgroundImage = new StyleBackground(greenPieceSprite);
                 }
                 if (x > 8 && y == 8)
                 {
                     buttonDictionary.Add(53 - x, btn);
                     btn.text = (53 - x).ToString();
-                    btn.style.backgroundImage = new StyleBackground(greenPieceSprite);
+                    //btn.style.backgroundImage = new StyleBackground(greenPieceSprite);
                 }
 
                 if (x == 8 && y > 8)
                 {
                     buttonDictionary.Add(36 + y, btn);
                     btn.text = (36 + y).ToString();
-                    btn.style.backgroundImage = new StyleBackground(redPieceSprite);
+                    //btn.style.backgroundImage = new StyleBackground(redPieceSprite);
                 }
                 btn.clicked += () =>
                 {
@@ -185,6 +193,7 @@ public class LudoController : Game
         }
 
 
+        UpdateUI();
         Button terningBtn = new Button();
         terningBtn.text = "Terning";
         terningBtn.clicked += () =>
@@ -197,6 +206,48 @@ public class LudoController : Game
         };
         root.Add(terningBtn);
         //MoveNext(nextPlayer);
+    }
+    private void UpdateUI()
+    {
+        ClearUI();
+        foreach (LudoPiece piece in game.GetLudoPieces())
+        {
+            if (piece.GetAbsolutePosition() == -1)
+            {
+                //Do some stuff to make the pieces at home
+            }
+            else
+            {
+                buttonDictionary[piece.GetAbsolutePosition()].style.backgroundImage = new StyleBackground(GetSprite(piece.GetOffset()));
+            }
+        }
+    }
+
+    public void ClearUI()
+    {
+        foreach(var button in buttonDictionary)
+        {
+            buttonDictionary[button.Key].Clear();
+
+        }
+    }
+
+    private Sprite GetSprite(int offset)
+    {
+        switch (offset)
+        {
+            case 1:
+                return bluePieceSprite;
+            case 14:
+                return redPieceSprite;
+            case 27:
+                return greenPieceSprite;
+            case 40:
+                return yellowPieceSprite;
+            default:
+                return null;
+        }
+        return null;
     }
     private int AddPlayer()
     {
@@ -215,10 +266,10 @@ public class LudoGame
     
     //private Dictionary<int, ludo_piece> ludo_pieces = new Dictionary<int, ludo_piece>();
     private readonly Dictionary<int, string> colors = new Dictionary<int, string>() {
-        {1,"Red" },
-        {2,"Green" },
-        {3,"Blue" },
-        {4,"Yellow" }
+        {1,"Blue" },
+        {14,"Red" },
+        {27,"Green" },
+        {40,"Yellow" }
     };
     private List<LudoPiece> ludoPieces = new List<LudoPiece>();
     public List<LudoPlayer> ludoPlayers = new List<LudoPlayer>();
@@ -276,6 +327,10 @@ public class LudoGame
             return 0;
         }
         return 0;
+    }
+    public List<LudoPiece> GetLudoPieces()
+    {
+        return ludoPieces;
     }
     public void StartGame()
     {
