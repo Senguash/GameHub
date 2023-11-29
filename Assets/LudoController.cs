@@ -184,10 +184,10 @@ public class LudoController : Game
                     btn.text = (36 + y).ToString();
                     //btn.style.backgroundImage = new StyleBackground(redPieceSprite);
                 }
-                if(x == 7 && y > 6)
+                if(x == 7 && y > 7 && y < 14)
                 {
-                    buttonDictionary.Add(50 + y, btn);
-                    btn.text = (50 + y).ToString();
+                    buttonDictionary.Add(65 - y, btn);
+                    btn.text = (65 - y).ToString();
                 }
                 btn.clicked += () =>
                 {
@@ -355,11 +355,11 @@ public class LudoGame
     {
         int maxpos = 57;
         int finishTiles = 5; 
-        if (piece.GetAbsolutePosition() == -1)
+        if (piece.GetAbsolutePosition() == -1)//Check if piece is home
         {
-            piece.SetAbsolutePosition(piece.GetOffset());
+            piece.SetAbsolutePosition(piece.GetOffset());//Move piece to offset
         }
-        else if (piece.GetAbsolutePosition()+diceSum > 51 && piece.GetOffset() != 1)
+        else if (piece.GetAbsolutePosition() <= 51 & piece.GetAbsolutePosition()+diceSum > 51 && piece.GetOffset() != 1)
         {
             piece.SetAbsolutePosition(diceSum - 1);
         }
@@ -429,6 +429,7 @@ public class LudoGame
         {
             Debug.Log("Offset: " + piece.GetOffset());
             Debug.Log("ABS:    " + piece.GetAbsolutePosition());
+            Debug.Log("RelABS: " + piece.GetAbsRelativePosition());
         }
     }
     public void NextPlayer()
