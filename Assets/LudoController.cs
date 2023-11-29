@@ -7,8 +7,7 @@ using UnityEngine.UIElements;
 using UnityEditor.Animations;
 using System.Linq;
 using System.Net.NetworkInformation;
-
-
+using UnityEditor.ShaderKeywordFilter;
 
 public class LudoController : Game
 {
@@ -185,6 +184,11 @@ public class LudoController : Game
                     btn.text = (36 + y).ToString();
                     //btn.style.backgroundImage = new StyleBackground(redPieceSprite);
                 }
+                if(x == 7 && y > 6)
+                {
+                    buttonDictionary.Add(50 + y, btn);
+                    btn.text = (50 + y).ToString();
+                }
                 btn.clicked += () =>
                 {
                     Debug.Log("Test");
@@ -215,6 +219,9 @@ public class LudoController : Game
             if (piece.GetAbsolutePosition() == -1)
             {
                 //Do some stuff to make the pieces at home
+            }else if(piece.GetAbsRelativePosition() >= 52)
+            {
+
             }
             else
             {
@@ -227,7 +234,7 @@ public class LudoController : Game
     {
         foreach(var button in buttonDictionary)
         {
-            buttonDictionary[button.Key].Clear();
+            buttonDictionary[button.Key].style.backgroundImage = null;
 
         }
     }
