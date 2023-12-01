@@ -184,10 +184,39 @@ public class LudoController : Game
                     btn.text = (36 + y).ToString();
                     //btn.style.backgroundImage = new StyleBackground(redPieceSprite);
                 }
-                if(x == 7 && y > 7 && y < 14)
+                if(x == 7 && y > 7 && y < 15)
                 {
                     buttonDictionary.Add(65 - y, btn);
                     btn.text = (65 - y).ToString();
+                }
+                if(y == 7 && x == 0)
+                {
+                    buttonDictionary.Add(12, btn);
+                    btn.text = (12).ToString();
+                }
+                if(y == 7 && x > 0 && x < 7)
+                {
+                    buttonDictionary.Add(52+12 + x, btn);
+                    btn.text = (52 + 12 + x).ToString();
+                }
+                if(y == 0 && x == 7)
+                {
+                    buttonDictionary.Add(25, btn);
+                    btn.text = (25).ToString();
+                }
+                if(x == 7 && y > 0 && y < 7)
+                {
+                    buttonDictionary.Add(52 + 25 + y, btn);
+                    btn.text = (52 + 25 + y).ToString();
+                }
+                if(y == 7 && x == 14){
+                    buttonDictionary.Add(38, btn);
+                    btn.text = (38).ToString();
+                }
+                if (y == 7 && x > 7 && x < 14)
+                {
+                    buttonDictionary.Add(97 - x + 7, btn);
+                    btn.text = (97 - x + 7).ToString();
                 }
                 btn.clicked += () =>
                 {
@@ -219,9 +248,9 @@ public class LudoController : Game
             if (piece.GetAbsolutePosition() == -1)
             {
                 //Do some stuff to make the pieces at home
-            }else if(piece.GetAbsRelativePosition() >= 52)
+            }else if(piece.GetAbsolutePosition() >= 52)
             {
-
+                buttonDictionary[piece.GetAbsolutePosition() + piece.GetOffset() - 1].style.backgroundImage = new StyleBackground(GetSprite(piece.GetOffset()));
             }
             else
             {
