@@ -11,16 +11,15 @@ using UnityEditor.ShaderKeywordFilter;
 
 public class LudoController : Game
 {
-    Sprite redPieceSprite;
-    Sprite greenPieceSprite;
-    Sprite bluePieceSprite;
-    Sprite yellowPieceSprite;
-    Dictionary<int, Button> buttonDictionary;
-    State newGame = new State("newGame");
-    State gameEnd = new State("gameEnd");
-    Command start = new Command("start");
-    Command nextPlayer = new Command("nextPlayer");
-    // Start is called before the first frame update
+    private Sprite redPieceSprite;
+    private Sprite greenPieceSprite;
+    private Sprite bluePieceSprite;
+    private Sprite yellowPieceSprite;
+    private Dictionary<int, Button> buttonDictionary;
+    private State newGame = new State("newGame");
+    private State gameEnd = new State("gameEnd");
+    private Command start = new Command("start");
+    private Command nextPlayer = new Command("nextPlayer");
     private readonly Dictionary<int, string> PlayerColors = new Dictionary<int, string>() {
         {1,"Red" },
         {2,"Green" },
@@ -35,7 +34,7 @@ public class LudoController : Game
     {
         transitions = new Dictionary<StateTransition, State>()
         {
-            
+
         };
 
         newGame.EnterEvent += InitNewGameMenu;
@@ -57,7 +56,7 @@ public class LudoController : Game
     }
     private void InitNewGameMenu()
     {
-        
+
         root.Add(new Label("LUDO"));
         Button startGameBtn = new Button();
         Button addPlayerBtn = new Button();
@@ -68,7 +67,7 @@ public class LudoController : Game
             {
                 startGameBtn.SetEnabled(true);
             }
-            else if(ret == 4)
+            else if (ret == 4)
             {
                 addPlayerBtn.SetEnabled(false);
             }
@@ -89,14 +88,14 @@ public class LudoController : Game
     {
         for (int i = 0; i < game.ludoPlayers.Count; i++)
         {
-            if(i == 0)
+            if (i == 0)
             {
                 transitions.Add(new StateTransition(newGame, nextPlayer), game.ludoPlayers[i].GetPlayerState());
             }
             else
             {
                 transitions.Add(new StateTransition(game.ludoPlayers[i - 1].GetPlayerState(), nextPlayer), game.ludoPlayers[i].GetPlayerState());
-                if (i+1 == game.ludoPlayers.Count)
+                if (i + 1 == game.ludoPlayers.Count)
                 {
                     transitions.Add(new StateTransition(game.ludoPlayers[i].GetPlayerState(), nextPlayer), game.ludoPlayers[0].GetPlayerState());
                 }
@@ -120,7 +119,7 @@ public class LudoController : Game
         for (int y = 0; y < 15; y++)
         {
             VisualElement column = UIGenerate.VisualElement(gameBoard, 240, 16, FlexDirection.Row);
-            for  (int x = 0; x < 15; x++)
+            for (int x = 0; x < 15; x++)
             {
                 Button btn = UIGenerate.Button(column, "");
                 btn.ClearClassList();
@@ -138,6 +137,110 @@ public class LudoController : Game
                     btn.text = (14 - y).ToString();
                     //btn.style.backgroundImage = new StyleBackground(redPieceSprite);
                 }
+                if (x == 1 && y == 10)
+                {
+                    buttonDictionary.Add(-1, btn);
+                    btn.text = (-1).ToString();
+                }
+                if (x == 1 && y == 12)
+                {
+                    buttonDictionary.Add(-2, btn);
+                    btn.text = (-2).ToString();
+                }
+                if (x == 3 && y == 10)
+                {
+                    buttonDictionary.Add(-3, btn);
+                    btn.text = (-3).ToString();
+
+                }
+                if (x == 3 && y == 12)
+                {
+                    buttonDictionary.Add(-4, btn);
+                    btn.text = (-4).ToString();
+                }
+                if (x == 10 && y == 10)
+                {
+                    buttonDictionary.Add(-41, btn);
+                    btn.text = (-41).ToString();
+                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+                }
+                if (x == 10 && y == 12)
+                {
+                    buttonDictionary.Add(-42, btn);
+                    btn.text = (-42).ToString();
+                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+                }
+                if (x == 12 && y == 10)
+                {
+                    buttonDictionary.Add(-43, btn);
+                    btn.text = (-43).ToString();
+                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+
+                }
+                if (x == 12 && y == 12)
+                {
+                    buttonDictionary.Add(-44, btn);
+                    btn.text = (-44).ToString();
+                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+
+                }
+
+
+                if (x == 1 && y == 1)
+                {
+                    buttonDictionary.Add(-15, btn);
+                    btn.text = (-15).ToString();
+                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+                }
+                if (x == 1 && y == 3)
+                {
+                    buttonDictionary.Add(-16, btn);
+                    btn.text = (-16).ToString();
+                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+                }
+                if (x == 3 && y == 1)
+                {
+                    buttonDictionary.Add(-17, btn);
+                    btn.text = (-17).ToString();
+                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+
+                }
+                if (x == 3 && y == 3)
+                {
+                    buttonDictionary.Add(-18, btn);
+                    btn.text = (-18).ToString();
+                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+
+                }
+
+
+                if (x == 10 && y == 1)
+                {
+                    buttonDictionary.Add(-28, btn);
+                    btn.text = (-28).ToString();
+                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+                }
+                if (x == 10 && y == 3)
+                {
+                    buttonDictionary.Add(-29, btn);
+                    btn.text = (-29).ToString();
+                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+                }
+                if (x == 12 && y == 1)
+                {
+                    buttonDictionary.Add(-30, btn);
+                    btn.text = (-30).ToString();
+                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+
+                }
+                if (x == 12 && y == 3)
+                {
+                    buttonDictionary.Add(-31, btn);
+                    btn.text = (-31).ToString();
+                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+
+                }
+
 
                 if (x < 6 && y == 8)
                 {
@@ -184,32 +287,33 @@ public class LudoController : Game
                     btn.text = (36 + y).ToString();
                     //btn.style.backgroundImage = new StyleBackground(redPieceSprite);
                 }
-                if(x == 7 && y > 7 && y < 15)
+                if (x == 7 && y > 7 && y < 15)
                 {
                     buttonDictionary.Add(65 - y, btn);
                     btn.text = (65 - y).ToString();
                 }
-                if(y == 7 && x == 0)
+                if (y == 7 && x == 0)
                 {
                     buttonDictionary.Add(12, btn);
                     btn.text = (12).ToString();
                 }
-                if(y == 7 && x > 0 && x < 7)
+                if (y == 7 && x > 0 && x < 7)
                 {
-                    buttonDictionary.Add(52+12 + x, btn);
+                    buttonDictionary.Add(52 + 12 + x, btn);
                     btn.text = (52 + 12 + x).ToString();
                 }
-                if(y == 0 && x == 7)
+                if (y == 0 && x == 7)
                 {
                     buttonDictionary.Add(25, btn);
                     btn.text = (25).ToString();
                 }
-                if(x == 7 && y > 0 && y < 7)
+                if (x == 7 && y > 0 && y < 7)
                 {
                     buttonDictionary.Add(52 + 25 + y, btn);
                     btn.text = (52 + 25 + y).ToString();
                 }
-                if(y == 7 && x == 14){
+                if (y == 7 && x == 14)
+                {
                     buttonDictionary.Add(38, btn);
                     btn.text = (38).ToString();
                 }
@@ -224,7 +328,6 @@ public class LudoController : Game
                 };
             }
         }
-
 
         UpdateUI();
         Button terningBtn = new Button();
@@ -261,11 +364,11 @@ public class LudoController : Game
 
     public void ClearUI()
     {
-        foreach(var button in buttonDictionary)
+        /*foreach(var button in buttonDictionary)
         {
             buttonDictionary[button.Key].style.backgroundImage = null;
 
-        }
+        }*/
     }
 
     private Sprite GetSprite(int offset)
