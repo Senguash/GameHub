@@ -162,26 +162,26 @@ public class LudoController : Game
                 {
                     buttonDictionary.Add(-41, btn);
                     btn.text = (-41).ToString();
-                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+                    //btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
                 }
                 if (x == 10 && y == 12)
                 {
                     buttonDictionary.Add(-42, btn);
                     btn.text = (-42).ToString();
-                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+                    //btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
                 }
                 if (x == 12 && y == 10)
                 {
                     buttonDictionary.Add(-43, btn);
                     btn.text = (-43).ToString();
-                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+                    //btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
 
                 }
                 if (x == 12 && y == 12)
                 {
                     buttonDictionary.Add(-44, btn);
                     btn.text = (-44).ToString();
-                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+                    //btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
 
                 }
 
@@ -190,26 +190,26 @@ public class LudoController : Game
                 {
                     buttonDictionary.Add(-15, btn);
                     btn.text = (-15).ToString();
-                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+                    //btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
                 }
                 if (x == 1 && y == 3)
                 {
                     buttonDictionary.Add(-16, btn);
                     btn.text = (-16).ToString();
-                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+                    //btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
                 }
                 if (x == 3 && y == 1)
                 {
                     buttonDictionary.Add(-17, btn);
                     btn.text = (-17).ToString();
-                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+                   // btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
 
                 }
                 if (x == 3 && y == 3)
                 {
                     buttonDictionary.Add(-18, btn);
                     btn.text = (-18).ToString();
-                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+                    //btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
 
                 }
 
@@ -218,26 +218,26 @@ public class LudoController : Game
                 {
                     buttonDictionary.Add(-28, btn);
                     btn.text = (-28).ToString();
-                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+                    //btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
                 }
                 if (x == 10 && y == 3)
                 {
                     buttonDictionary.Add(-29, btn);
                     btn.text = (-29).ToString();
-                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+                    //btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
                 }
                 if (x == 12 && y == 1)
                 {
                     buttonDictionary.Add(-30, btn);
                     btn.text = (-30).ToString();
-                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+                    //btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
 
                 }
                 if (x == 12 && y == 3)
                 {
                     buttonDictionary.Add(-31, btn);
                     btn.text = (-31).ToString();
-                    btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
+                    //btn.style.backgroundImage = new StyleBackground(bluePieceSprite);
 
                 }
 
@@ -350,25 +350,42 @@ public class LudoController : Game
         {
             if (piece.GetAbsolutePosition() == -1)
             {
-                //Do some stuff to make the pieces at home
+                for (int i = 0; i < 4; i++) {
+                    Debug.Log(buttonDictionary[piece.GetAbsolutePosition() - (piece.GetOffset() + i)].style.backgroundImage);
+                    Debug.Log(piece.GetAbsolutePosition() - (piece.GetOffset() + i));
+                    if (buttonDictionary[piece.GetAbsolutePosition() - (piece.GetOffset() + i)].style.backgroundImage != new StyleBackground(GetSprite(piece.GetOffset())))
+                    {
+                        Debug.Log("Add sprite");
+                        buttonDictionary[piece.GetAbsolutePosition() - (piece.GetOffset() + i)].style.backgroundImage = new StyleBackground(GetSprite(piece.GetOffset()));
+                        break;
+                    }
+                }
+
             }else if(piece.GetAbsolutePosition() >= 52)
             {
                 buttonDictionary[piece.GetAbsolutePosition() + piece.GetOffset() - 1].style.backgroundImage = new StyleBackground(GetSprite(piece.GetOffset()));
             }
             else
             {
-                buttonDictionary[piece.GetAbsolutePosition()].style.backgroundImage = new StyleBackground(GetSprite(piece.GetOffset()));
+                if (buttonDictionary[piece.GetAbsolutePosition()].style.backgroundImage != null)
+                {
+                    buttonDictionary[piece.GetAbsolutePosition()].style.
+                }
+                else
+                {
+                    buttonDictionary[piece.GetAbsolutePosition()].style.backgroundImage = new StyleBackground(GetSprite(piece.GetOffset()));
+                }
             }
         }
     }
 
     public void ClearUI()
     {
-        /*foreach(var button in buttonDictionary)
+        foreach(var button in buttonDictionary)
         {
             buttonDictionary[button.Key].style.backgroundImage = null;
 
-        }*/
+        }
     }
 
     private Sprite GetSprite(int offset)
