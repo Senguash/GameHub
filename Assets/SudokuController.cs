@@ -35,6 +35,8 @@ public class SudokuController : Game
     static Color col_locked_text = new Color(0.25f, 0.25f, 0.4f);
     static Color col_game_over_label = new Color(0.15f, 0f, 0f);
     static Color col_victory_label = new Color(0.9f, 1f, 0.9f);
+    static Color col_success_background = new Color(0.3f, 0.3f, 0.3f);
+    static Color col_success_text = new Color(0.8f, 1f, 0.8f);
 
     State newOrContinue = new State("newOrContinue");
     State difficultySelect = new State("difficultySelect");
