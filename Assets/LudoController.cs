@@ -346,8 +346,6 @@ public class LudoController : Game
             VEdice.Clear();
             VEdice.Add(UIGenerate.ShowDice(dice));
             
-            terningBtn.SetEnabled(false);
-            game.DiceThrow(CurrentState);
             MoveNext(nextPlayer);
             terningBtn.SetEnabled(true);
         };
