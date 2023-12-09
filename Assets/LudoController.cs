@@ -20,6 +20,7 @@ public class LudoController : Game
     private State gameEnd = new State("gameEnd");
     private Command start = new Command("start");
     private Command nextPlayer = new Command("nextPlayer");
+    VisualElement VEdice;
     private readonly Dictionary<int, string> PlayerColors = new Dictionary<int, string>() {
         {1,"Red" },
         {2,"Green" },
@@ -58,6 +59,7 @@ public class LudoController : Game
     {
 
         root.Add(new Label("LUDO"));
+       
         Button startGameBtn = new Button();
         Button addPlayerBtn = new Button();
         addPlayerBtn.text = "Add player";
@@ -79,6 +81,7 @@ public class LudoController : Game
         startGameBtn.SetEnabled(false);
         root.Add(addPlayerBtn);
         root.Add(startGameBtn);
+        //root.Add(VEdice);
     }
     private void StartGame()
     {
@@ -115,6 +118,7 @@ public class LudoController : Game
 
         Sprite gameBoardSprite = Resources.Load<Sprite>("Ludo/istockphoto-493120080-1024x1024");
         VisualElement gameBoard = UIGenerate.VisualElement(root, 240, 240, FlexDirection.Column);
+        VEdice = UIGenerate.VisualElement(root, Length.Percent(100), Length.Percent(15), FlexDirection.Row, Align.Center);
         gameBoard.style.backgroundImage = new StyleBackground(gameBoardSprite);
         for (int y = 0; y < 15; y++)
         {
@@ -335,9 +339,12 @@ public class LudoController : Game
         terningBtn.text = "Terning";
         terningBtn.clicked += () =>
         {
-            
+            System.Random rnd = new System.Random();
+            int dice = rnd.Next(1, 7);
             terningBtn.SetEnabled(false);
-            game.DiceThrow(CurrentState);
+            game.Move(dice, CurrentState);
+            VEdice.Clear();
+            VEdice.Add(UIGenerate.ShowDice(dice));
             MoveNext(nextPlayer);
             terningBtn.SetEnabled(true);
         };
@@ -581,11 +588,11 @@ public class LudoGame
     {
         //remove pieces that are done/finish
         List<LudoPiece> pieces = ludoPieces.Where(x => x.GetOffset() == ColorNameToKey(color)).ToList();
-        if (diceSum == 12)
+        if (diceSum == 6)
         {
             return pieces.Where(x => x.GetAbsolutePosition() != 57).ToList();
         }
-        else if(diceSum < 12)
+        else if(diceSum < 6)
         {
             return pieces.Where(x => x.GetAbsolutePosition() != -1 && x.GetAbsolutePosition() != 57).ToList();
         }
@@ -600,24 +607,18 @@ public class LudoGame
             Debug.Log("RelABS: " + piece.GetAbsRelativePosition());
         }
     }
-    public void NextPlayer()
+    
+    public void Move(int dice, StateMachine.State currentState)
     {
-
-
-    }
-    public void DiceThrow(StateMachine.State currentState)
-    {
-        System.Random rnd = new System.Random();
-        int sum = rnd.Next(1, 7) + rnd.Next(1, 7);
-        Debug.Log("DICE: " + sum);
+        Debug.Log("DICE: " + dice);
         Debug.Log("Current Player: " + currentState.ToString());
         LudoPlayer cPlayer = ludoPlayers.Where(x => x.GetPlayerState() == currentState).First();
         Debug.Log("Player color: " + cPlayer.GetColor());
-        List<LudoPiece> pieceList = GetMoveablePieces(cPlayer.GetColor(), sum);
+        List<LudoPiece> pieceList = GetMoveablePieces(cPlayer.GetColor(), dice);
         if (pieceList.Count > 0)
         {
             //Make user select
-            MovePiece(pieceList.First(), sum);
+            MovePiece(pieceList.First(), dice);
         }
         else
         {
