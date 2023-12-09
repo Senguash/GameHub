@@ -86,21 +86,21 @@ public class LudoController : Game
     }
     private void AddplayerStates()
     {
-        for (int i = 0; i < game.ludoPlayers.Count; i++)
+        for (int i = 0; i < game.GetLudoPlayers().Count; i++)
         {
             if (i == 0)
             {
-                transitions.Add(new StateTransition(newGame, nextPlayer), game.ludoPlayers[i].GetPlayerState());
+                transitions.Add(new StateTransition(newGame, nextPlayer), game.GetLudoPlayers()[i].GetPlayerState());
             }
             else
             {
-                transitions.Add(new StateTransition(game.ludoPlayers[i - 1].GetPlayerState(), nextPlayer), game.ludoPlayers[i].GetPlayerState());
-                if (i + 1 == game.ludoPlayers.Count)
+                transitions.Add(new StateTransition(game.GetLudoPlayers()[i - 1].GetPlayerState(), nextPlayer), game.GetLudoPlayers()[i].GetPlayerState());
+                if (i + 1 == game.GetLudoPlayers().Count)
                 {
-                    transitions.Add(new StateTransition(game.ludoPlayers[i].GetPlayerState(), nextPlayer), game.ludoPlayers[0].GetPlayerState());
+                    transitions.Add(new StateTransition(game.GetLudoPlayers()[i].GetPlayerState(), nextPlayer), game.GetLudoPlayers()[0].GetPlayerState());
                 }
             }
-            game.ludoPlayers[i].GetPlayerState().LeaveEvent += UpdateUI;
+            game.GetLudoPlayers()[i].GetPlayerState().LeaveEvent += UpdateUI;
             //game.ludoPlayers[i].GetPlayerState().LeaveEvent += game.NextPlayer;
         }
     }
@@ -135,6 +135,7 @@ public class LudoController : Game
                         //SomeFunc(tmp);
                     };
                     btn.text = (14 - y).ToString();
+                    //btn.style.backgrouunf
                     //btn.style.backgroundImage = new StyleBackground(redPieceSprite);
                 }
                 if (x == 1 && y == 10)
@@ -369,7 +370,8 @@ public class LudoController : Game
             {
                 if (buttonDictionary[piece.GetAbsolutePosition()].style.backgroundImage != null)
                 {
-                    buttonDictionary[piece.GetAbsolutePosition()].style.
+                    //Try to add 2 images?
+                    buttonDictionary[piece.GetAbsolutePosition()].style.backgroundImage = new StyleBackground(GetSprite(piece.GetOffset()));
                 }
                 else
                 {
@@ -407,10 +409,12 @@ public class LudoController : Game
     }
     private int AddPlayer()
     {
-        game.ludoPlayers.Add(new LudoPlayer("DEMO", PlayerColors[game.ludoPlayers.Count + 1], false, new State("player" + (game.ludoPlayers.Count + 1))));
+        int count;
+        count = game.AddLudoPlayer(new LudoPlayer("DEMO", PlayerColors[game.GetLudoPlayers().Count + 1], false, new State("player" + (game.GetLudoPlayers().Count + 1))));
+        /*game.ludoPlayers.Add();
         //Debug.Log(ludoPlayers[ludoPlayers.Count-1].GetColor());
-        game.CreatePieces(game.ludoPlayers[game.ludoPlayers.Count - 1].GetColor());
-        return game.ludoPlayers.Count;
+        game.CreatePieces(game.ludoPlayers[game.ludoPlayers.Count - 1].GetColor());*/
+        return count;
         
     }
 }
@@ -428,7 +432,7 @@ public class LudoGame
         {40,"Yellow" }
     };
     private List<LudoPiece> ludoPieces = new List<LudoPiece>();
-    public List<LudoPlayer> ludoPlayers = new List<LudoPlayer>();
+    private List<LudoPlayer> ludoPlayers = new List<LudoPlayer>();
     private int ColorNameToKey(string color)
     {
         return colors.FirstOrDefault(x => x.Value == color).Key;
@@ -480,8 +484,23 @@ public class LudoGame
                     }
                 }
             }
-            return 0;
         }
+        return 0;
+    }
+    public int AddLudoPlayer(LudoPlayer ludoPlayer)
+    {
+        ludoPlayers.Add(ludoPlayer);
+        CreatePieces(ludoPlayers[ludoPlayers.Count - 1].GetColor());
+        return ludoPlayers.Count;
+
+    }
+    public List<LudoPlayer> GetLudoPlayers()
+    {
+        return ludoPlayers;
+    }
+    public int SetLudoPlayers(List<LudoPlayer> LudoPlayers)
+    {
+        ludoPlayers = LudoPlayers;
         return 0;
     }
     public List<LudoPiece> GetLudoPieces()
